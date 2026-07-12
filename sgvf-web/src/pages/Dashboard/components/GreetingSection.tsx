@@ -2,10 +2,12 @@ import { Box, Typography } from "@mui/material";
 
 /**
  * Muestra un saludo según el horario actual
- * y la fecha formateada en español.
+ * y la fecha en español.
  */
 function GreetingSection() {
   const ahora = new Date();
+  
+  // Devuelve solamente la hora actual, como un número entre 0 y 23.
   const hora = ahora.getHours();
 
   const obtenerSaludo = () => {

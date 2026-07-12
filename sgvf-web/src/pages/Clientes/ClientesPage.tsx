@@ -1,17 +1,17 @@
 import { Typography } from "@mui/material";
 
-function ProductosPage() {
+function ClientesPage() {
   return (
     <>
       <Typography variant="h4" sx={{ fontWeight: 700 }}>
-        Productos
+        Clientes
       </Typography>
 
       <Typography color="text.secondary" sx={{ mt: 1 }}>
-        Próximamente se mostrará la gestión de productos.
+        Próximamente se mostrará la gestión de clientes.
       </Typography>
     </>
   );
 }
 
-export default ProductosPage;
+export default ClientesPage;

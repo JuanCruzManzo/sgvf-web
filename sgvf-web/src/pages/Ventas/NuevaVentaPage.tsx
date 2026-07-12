@@ -1,9 +1,16 @@
+import { Typography } from "@mui/material";
+
 function NuevaVentaPage() {
   return (
-    <main>
-      <h1>Nueva venta</h1>
-      <p>Acá se registrará una nueva venta.</p>
-    </main>
+    <>
+      <Typography variant="h4" sx={{ fontWeight: 700 }}>
+        Ventas
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ mt: 1 }}>
+        Próximamente se mostrará la gestión de las ventas.
+      </Typography>
+    </>
   );
 }
 
