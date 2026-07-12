@@ -17,7 +17,7 @@ function MainLayout() {
         maxWidth="sm"
         component="main"
         sx={{
-          py: 3,
+          py: 2,
           pb: 11,
         }}
       >

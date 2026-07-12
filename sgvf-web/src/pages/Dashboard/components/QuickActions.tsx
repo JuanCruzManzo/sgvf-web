@@ -40,7 +40,7 @@ function QuickActions() {
         component="h2"
         sx={{
           mb: 2,
-          fontSize: "1.15rem",
+          fontSize: "1.05rem",
           fontWeight: 700,
           color: "#333333",
         }}

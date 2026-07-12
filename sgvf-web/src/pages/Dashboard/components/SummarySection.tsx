@@ -13,12 +13,12 @@ import SummaryCard from "./SummaryCard";
  */
 function SummarySection() {
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: 3 }}>
       <Typography
         component="h2"
         sx={{
-          mb: 2,
-          fontSize: "1.15rem",
+          mb: 1.25,
+          fontSize: "1.05rem",
           fontWeight: 700,
           color: "#333333",
         }}
@@ -30,7 +30,7 @@ function SummarySection() {
         sx={{
           display: "grid",
           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 1.5,
+          gap: 1,
         }}
       >
         <SummaryCard

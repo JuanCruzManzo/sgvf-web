@@ -1,10 +1,14 @@
+import { useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
   Box,
-  Card,
   Divider,
   Typography,
 } from "@mui/material";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 
 const ventasRecientes = [
   {
@@ -31,52 +35,92 @@ const ventasRecientes = [
 ];
 
 /**
- * Presenta una vista previa de las últimas ventas registradas.
+ * Muestra las ventas más recientes dentro de una sección desplegable.
  *
- * Actualmente tiene información simulada para validar
- * el diseño antes de conectar el endpoint.
+ * Actualmente utiliza datos simulados.
+ * Más adelante se reemplazarán por información proveniente de la API.
  */
 function RecentSales() {
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography
-        component="h2"
-        sx={{
-          mb: 2,
-          fontSize: "1.15rem",
-          fontWeight: 700,
-          color: "#333333",
-        }}
-      >
-        Últimas ventas
-      </Typography>
+  const [expandido, setExpandido] = useState(false);
 
-      <Card
-        elevation={0}
+  return (
+    <Accordion
+      expanded={expandido}
+      onChange={(_, nuevoEstado) => setExpandido(nuevoEstado)}
+      disableGutters
+      elevation={0}
+      sx={{
+        mb: 2,
+        borderRadius: "16px !important",
+        border: "1px solid #EEEEEE",
+        backgroundColor: "#FFFFFF",
+        overflow: "hidden",
+        "&::before": {
+          display: "none",
+        },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreRoundedIcon />}
         sx={{
+          minHeight: 56,
           px: 2,
-          borderRadius: "16px",
-          border: "1px solid #EEEEEE",
-          backgroundColor: "#FFFFFF",
+          "& .MuiAccordionSummary-content": {
+            my: 1.5,
+          },
         }}
       >
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 1,
+          }}
+        >
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: "1.05rem",
+              fontWeight: 700,
+              color: "#333333",
+            }}
+          >
+            Últimas ventas
+          </Typography>
+
+          {!expandido && (
+            <Typography
+              sx={{
+                fontSize: "0.82rem",
+                color: "text.secondary",
+              }}
+            >
+              Ver movimientos
+            </Typography>
+          )}
+        </Box>
+      </AccordionSummary>
+
+      <AccordionDetails sx={{ px: 2, pt: 0, pb: 1 }}>
         {ventasRecientes.map((venta, index) => (
           <Box key={venta.id}>
             <Box
               sx={{
-                py: 2,
+                py: 1.5,
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
+                gap: 1.25,
               }}
             >
               <Avatar
                 sx={{
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   backgroundColor: "#E8F5E9",
                   color: "#2E7D32",
-                  fontSize: "0.9rem",
+                  fontSize: "0.82rem",
                   fontWeight: 700,
                 }}
               >
@@ -87,7 +131,7 @@ function RecentSales() {
                 <Typography
                   noWrap
                   sx={{
-                    fontSize: "0.95rem",
+                    fontSize: "0.9rem",
                     fontWeight: 600,
                     color: "#333333",
                   }}
@@ -98,8 +142,8 @@ function RecentSales() {
                 <Typography
                   noWrap
                   sx={{
-                    mt: 0.25,
-                    fontSize: "0.8rem",
+                    mt: 0.15,
+                    fontSize: "0.76rem",
                     color: "text.secondary",
                   }}
                 >
@@ -109,7 +153,7 @@ function RecentSales() {
 
               <Typography
                 sx={{
-                  fontSize: "0.9rem",
+                  fontSize: "0.88rem",
                   fontWeight: 700,
                   color: "#2E7D32",
                 }}
@@ -121,8 +165,20 @@ function RecentSales() {
             {index < ventasRecientes.length - 1 && <Divider />}
           </Box>
         ))}
-      </Card>
-    </Box>
+
+        <Typography
+          sx={{
+            py: 1.25,
+            textAlign: "center",
+            color: "#2E7D32",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+          }}
+        >
+          Ver todas las ventas
+        </Typography>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 

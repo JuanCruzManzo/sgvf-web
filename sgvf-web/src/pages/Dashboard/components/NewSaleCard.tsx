@@ -35,8 +35,8 @@ function NewSaleCard() {
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          p: 2.5,
-          minHeight: 130,
+          p: 2,
+          minHeight: 108,
         }}
       >
         <Box
@@ -58,14 +58,14 @@ function NewSaleCard() {
               flexShrink: 0,
             }}
           >
-            <ShoppingCartRoundedIcon sx={{ fontSize: 34 }} />
+            <ShoppingCartRoundedIcon sx={{ fontSize: 30 }} />
           </Box>
 
           <Box>
             <Typography
               component="h2"
               sx={{
-                fontSize: "1.45rem",
+                fontSize: "1.25rem",
                 fontWeight: 700,
               }}
             >
@@ -75,7 +75,7 @@ function NewSaleCard() {
             <Typography
               sx={{
                 mt: 0.5,
-                fontSize: "0.95rem",
+                fontSize: "0.88rem",
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >

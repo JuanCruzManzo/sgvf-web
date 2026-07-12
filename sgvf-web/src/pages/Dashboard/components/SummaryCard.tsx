@@ -9,10 +9,6 @@ interface SummaryCardProps {
   iconColor?: string;
 }
 
-/**
- * Tarjeta reutilizable para mostrar indicadores breves
- * dentro del resumen del Dashboard.
- */
 function SummaryCard({
   title,
   value,
@@ -24,19 +20,21 @@ function SummaryCard({
     <Card
       elevation={0}
       sx={{
-        p: 2,
-        borderRadius: "16px",
+        p: 0.7,
+        borderRadius: "14px",
         backgroundColor,
         border: "1px solid rgba(0, 0, 0, 0.04)",
-        height: "100%",
+        minHeight: 90,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
       }}
     >
       <Box
         sx={{
-          width: 42,
-          height: 42,
-          mb: 1.5,
-          borderRadius: "12px",
+          width: 34,
+          height: 34,
+          borderRadius: "10px",
           backgroundColor: "#FFFFFF",
           color: iconColor,
           display: "flex",
@@ -47,25 +45,29 @@ function SummaryCard({
         {icon}
       </Box>
 
-      <Typography
-        sx={{
-          fontSize: "1.35rem",
-          fontWeight: 700,
-          color: "#333333",
-        }}
-      >
-        {value}
-      </Typography>
+      <Box>
+        <Typography
+          sx={{
+            fontSize: "1.15rem",
+            fontWeight: 700,
+            color: "#333333",
+            lineHeight: 1.2,
+          }}
+        >
+          {value}
+        </Typography>
 
-      <Typography
-        sx={{
-          mt: 0.25,
-          fontSize: "0.85rem",
-          color: "text.secondary",
-        }}
-      >
-        {title}
-      </Typography>
+        <Typography
+          sx={{
+            mt: 0.25,
+            fontSize: "0.78rem",
+            color: "text.secondary",
+            lineHeight: 1.25,
+          }}
+        >
+          {title}
+        </Typography>
+      </Box>
     </Card>
   );
 }

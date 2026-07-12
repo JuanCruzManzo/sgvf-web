@@ -32,29 +32,30 @@ function GreetingSection() {
     fechaActual.charAt(0).toUpperCase() + fechaActual.slice(1);
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography
-        component="h1"
-        sx={{
-          fontSize: "1.75rem",
-          fontWeight: 700,
-          color: "#333333",
-        }}
-      >
-        {obtenerSaludo()} 👋
-      </Typography>
+  <Box sx={{ mb: 2 }}>
+    <Typography
+      component="h1"
+      sx={{
+        fontSize: "1.5rem",
+        fontWeight: 700,
+        color: "#333333",
+        lineHeight: 1.2,
+      }}
+    >
+      {obtenerSaludo()} 👋
+    </Typography>
 
-      <Typography
-        sx={{
-          mt: 0.5,
-          color: "text.secondary",
-          fontSize: "1rem",
-        }}
-      >
-        {fechaCapitalizada}
-      </Typography>
-    </Box>
-  );
+    <Typography
+      sx={{
+        mt: 0.25,
+        color: "text.secondary",
+        fontSize: "0.9rem",
+      }}
+    >
+      {fechaCapitalizada}
+    </Typography>
+  </Box>
+);
 }
 
 export default GreetingSection;
