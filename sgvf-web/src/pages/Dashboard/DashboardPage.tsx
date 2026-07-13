@@ -1,6 +1,5 @@
 import GreetingSection from "./components/GreetingSection";
 import NewSaleCard from "./components/NewSaleCard";
-import SummarySection from "./components/SummarySection";
 import QuickActions from "./components/QuickActions";
 import RecentSales from "./components/RecentSales";
 
@@ -15,7 +14,6 @@ function DashboardPage() {
     <>
       <GreetingSection />
       <NewSaleCard />
-      <SummarySection />
       <QuickActions />
       <RecentSales />
     </>

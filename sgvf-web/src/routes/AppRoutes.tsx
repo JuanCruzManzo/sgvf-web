@@ -8,6 +8,7 @@ import NuevaVentaPage from "../pages/Ventas/NuevaVentaPage";
 import ClientesPage from "../pages/Clientes/ClientesPage";
 import ProveedoresPage from "../pages/Proveedores/ProveedoresPage";
 import VentasPage from "../pages/Ventas/VentasPage";
+import EstadisticasPage from "../pages/Estadisticas/EstadisticasPage";
 
 /**
  * Centraliza las rutas principales del sistema.
@@ -27,6 +28,7 @@ function AppRoutes() {
         <Route path="ventas/nueva" element={<NuevaVentaPage />} />
         <Route path="clientes" element={<ClientesPage />} />
         <Route path="proveedores" element={<ProveedoresPage />} />
+        <Route path="estadisticas" element={<EstadisticasPage />} />
       </Route>
     </Routes>
   );

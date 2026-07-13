@@ -17,7 +17,7 @@ function TopBar() {
             variant="h6"
             sx={{ fontWeight: 700, color: "#2E7D32", lineHeight: 1.2 }}
           >
-            SGVF
+            El Pariente
           </Typography>
 
           <Typography variant="body2" color="text.secondary">

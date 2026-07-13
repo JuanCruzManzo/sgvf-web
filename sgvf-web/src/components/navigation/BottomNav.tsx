@@ -6,7 +6,7 @@ import {
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import { useLocation, useNavigate } from "react-router-dom";
 
 function BottomNav() {
@@ -59,9 +59,9 @@ function BottomNav() {
         />
 
         <BottomNavigationAction
-          label="Más"
-          value="/mas"
-          icon={<MoreHorizRoundedIcon />}
+          label="Estadísticas"
+          value="/estadisticas"
+          icon={<BarChartIcon/>}
         />
       </BottomNavigation>
     </Paper>
