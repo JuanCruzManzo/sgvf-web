@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../../services/authService";
+
 import {
   Box,
   Button,
@@ -9,50 +11,71 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+
 import AgricultureRoundedIcon from "@mui/icons-material/AgricultureRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { Link } from "@mui/material";
 
-/**
- * Pantalla visual de acceso al sistema.
- *
- * En esta primera versión, el formulario no consume todavía la API.
- * Al enviarse correctamente, redirige al Dashboard para permitir
- * la demostración del flujo general de la aplicación.
- */
+
 function LoginPage() {
+
   const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
+
   const [errores, setErrores] = useState({
     usuario: "",
     contrasena: "",
   });
 
-  /**
-   * Valida que ambos campos estén completos.
-   * Si la validación es correcta, simula el inicio de sesión.
-   */
-  const manejarIngreso = (event: React.FormEvent<HTMLFormElement>) => {
+
+  const manejarIngreso = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+
     event.preventDefault();
+
 
     const nuevosErrores = {
       usuario: usuario.trim() ? "" : "Ingresá tu usuario.",
       contrasena: contrasena.trim() ? "" : "Ingresá tu contraseña.",
     };
 
+
     setErrores(nuevosErrores);
 
-    const formularioValido =
-      !nuevosErrores.usuario && !nuevosErrores.contrasena;
 
-    if (formularioValido) {
-      navigate("/");
+    const formularioValido =
+      !nuevosErrores.usuario &&
+      !nuevosErrores.contrasena;
+
+
+    if (!formularioValido) {
+      return;
     }
+
+
+    try {
+
+      await login(usuario, contrasena);
+
+      navigate("/");
+
+
+    } catch(error) {
+
+      setErrores({
+        usuario: "Usuario o contraseña incorrectos.",
+        contrasena: "",
+      });
+
+    }
+
   };
+
 
   return (
     <Box
@@ -67,6 +90,7 @@ function LoginPage() {
         py: 0,
       }}
     >
+
       <Paper
         component="main"
         elevation={0}
@@ -82,12 +106,14 @@ function LoginPage() {
           },
         }}
       >
+
         <Box
           sx={{
             mb: 4,
             textAlign: "center",
           }}
         >
+
           <Box
             sx={{
               width: 72,
@@ -105,6 +131,7 @@ function LoginPage() {
             <AgricultureRoundedIcon sx={{ fontSize: 40 }} />
           </Box>
 
+
           <Typography
             component="h1"
             sx={{
@@ -116,6 +143,7 @@ function LoginPage() {
             Sistema de Gestión
           </Typography>
 
+
           <Typography
             sx={{
               mt: 0.5,
@@ -125,14 +153,19 @@ function LoginPage() {
           >
             Frutihortícola
           </Typography>
+
         </Box>
 
+
         <Box component="form" onSubmit={manejarIngreso} noValidate>
+
+
           <TextField
             fullWidth
             label="Usuario"
             value={usuario}
             onChange={(event) => {
+
               setUsuario(event.target.value);
 
               if (errores.usuario) {
@@ -141,6 +174,7 @@ function LoginPage() {
                   usuario: "",
                 }));
               }
+
             }}
             error={Boolean(errores.usuario)}
             helperText={errores.usuario}
@@ -148,12 +182,14 @@ function LoginPage() {
             sx={{ mb: 2 }}
           />
 
+
           <TextField
             fullWidth
             label="Contraseña"
             type={mostrarContrasena ? "text" : "password"}
             value={contrasena}
             onChange={(event) => {
+
               setContrasena(event.target.value);
 
               if (errores.contrasena) {
@@ -162,14 +198,17 @@ function LoginPage() {
                   contrasena: "",
                 }));
               }
+
             }}
             error={Boolean(errores.contrasena)}
             helperText={errores.contrasena}
             autoComplete="current-password"
+
             slotProps={{
               input: {
                 endAdornment: (
                   <InputAdornment position="end">
+
                     <IconButton
                       type="button"
                       aria-label={
@@ -178,48 +217,60 @@ function LoginPage() {
                           : "Mostrar contraseña"
                       }
                       onClick={() =>
-                        setMostrarContrasena((estadoAnterior) => !estadoAnterior)
+                        setMostrarContrasena(
+                          (estadoAnterior) => !estadoAnterior
+                        )
                       }
                       edge="end"
                     >
+
                       {mostrarContrasena ? (
                         <VisibilityOffRoundedIcon />
                       ) : (
                         <VisibilityRoundedIcon />
                       )}
+
                     </IconButton>
+
                   </InputAdornment>
                 ),
               },
             }}
+
             sx={{ mb: 3 }}
           />
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    mb: 3,
-                }}
-                >
-                <Link
-                    component="button"
-                    type="button"
-                    underline="hover"
-                    sx={{
-                    color: "#2E7D32",
-                    fontSize: "0.85rem",
-                    fontWeight: 400,
-                    textDecoration: "none",
-                    cursor: "pointer",
 
-                    "&:hover": {
-                        color: "#256628",
-                    },
-                    }}
-                >
-                    ¿Olvidaste tu contraseña?
-                </Link>
-            </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              mb: 3,
+            }}
+          >
+
+            <Link
+              component="button"
+              type="button"
+              underline="hover"
+              sx={{
+                color: "#2E7D32",
+                fontSize: "0.85rem",
+                fontWeight: 400,
+                textDecoration: "none",
+                cursor: "pointer",
+
+                "&:hover": {
+                  color: "#256628",
+                },
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+
+          </Box>
+
+
           <Button
             type="submit"
             fullWidth
@@ -233,6 +284,7 @@ function LoginPage() {
               textTransform: "none",
               fontSize: "1rem",
               boxShadow: "none",
+
               "&:hover": {
                 backgroundColor: "#256628",
                 boxShadow: "none",
@@ -241,7 +293,10 @@ function LoginPage() {
           >
             Ingresar
           </Button>
+
+
         </Box>
+
 
         <Typography
           sx={{
@@ -253,9 +308,13 @@ function LoginPage() {
         >
           © 2026 SGVF
         </Typography>
+
+
       </Paper>
+
     </Box>
   );
 }
+
 
 export default LoginPage;
