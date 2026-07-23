@@ -11,12 +11,12 @@ import {
   ChevronRightRounded,
   DeleteOutlined,
   EditOutlined,
-  PersonOutlined,
+  LocalShippingOutlined,
   PhoneOutlined,
   ReceiptLongOutlined,
 } from "@mui/icons-material";
 
-interface ClienteCardProps {
+interface ProveedorCardProps {
   nombre: string;
   telefono: string;
   saldoPendiente: number;
@@ -25,14 +25,14 @@ interface ClienteCardProps {
   onEliminar?: () => void;
 }
 
-function ClienteCard({
+function ProveedorCard({
   nombre,
   telefono,
   saldoPendiente,
   onVerMovimientos,
   onEditar,
   onEliminar,
-}: ClienteCardProps) {
+}: ProveedorCardProps) {
   const iniciales = nombre
     .split(" ")
     .filter(Boolean)
@@ -68,6 +68,7 @@ function ClienteCard({
           },
         }}
       >
+        {/* Información principal */}
         <Box
           sx={{
             display: "grid",
@@ -77,6 +78,7 @@ function ClienteCard({
             alignItems: "center",
           }}
         >
+          {/* Avatar */}
           <Avatar
             sx={{
               gridColumn: 1,
@@ -91,7 +93,7 @@ function ClienteCard({
               fontWeight: 700,
             }}
           >
-            {iniciales || <PersonOutlined />}
+            {iniciales || <LocalShippingOutlined />}
           </Avatar>
 
           {/* Nombre */}
@@ -110,7 +112,7 @@ function ClienteCard({
           >
             {nombre}
           </Typography>
-          
+
           {/* Editar y eliminar */}
           <Stack
             direction="row"
@@ -123,50 +125,54 @@ function ClienteCard({
             }}
           >
             <IconButton
-              size="small"
-              aria-label={`Editar cliente ${nombre}`}
-              onClick={onEditar}
-              sx={{
-                width: 32,
-                height: 32,
-                border: "1px solid #BDBDBD",
-                borderRadius: "8px",
-                color: "#616161",
-                backgroundColor: "#F7F7F7",
-                "&:hover": {
-                  backgroundColor: "#EEEEEE",
-                  borderColor: "#9E9E9E",
-                },
-                "&:active": {
-                  backgroundColor: "#F7F7F7",
-                },
-              }}
-            >
-              <EditOutlined fontSize="small" />
-            </IconButton>
+                size="small"
+                aria-label={`Editar proveedor ${nombre}`}
+                onClick={onEditar}
+                sx={{
+                    width: 32,
+                    height: 32,
+                    border: "1px solid #BDBDBD",
+                    borderRadius: "8px",
+                    color: "#616161",
+                    backgroundColor: "#F7F7F7",
 
-            <IconButton
-              size="small"
-              aria-label={`Eliminar cliente ${nombre}`}
-              onClick={onEliminar}
-              sx={{
-                width: 32,
-                height: 32,
-                border: "1px solid #EF9A9A",
-                borderRadius: "8px",
-                color: "#E53935",
-                backgroundColor: "#FFF5F5",
-                "&:hover": {
-                  backgroundColor: "#FFEBEE",
-                  borderColor: "#E53935",
-                },
-                "&:active": {
-                  backgroundColor: "#FFF5F5",
-                },
-              }}
-            >
-              <DeleteOutlined fontSize="small" />
-            </IconButton>
+                    "&:hover": {
+                    backgroundColor: "#EEEEEE",
+                    borderColor: "#9E9E9E",
+                    },
+
+                    "&:active": {
+                    backgroundColor: "#F7F7F7",
+                    },
+                }}
+                >
+                <EditOutlined fontSize="small" />
+                </IconButton>
+
+                <IconButton
+                size="small"
+                aria-label={`Eliminar proveedor ${nombre}`}
+                onClick={onEliminar}
+                sx={{
+                    width: 32,
+                    height: 32,
+                    border: "1px solid #EF9A9A",
+                    borderRadius: "8px",
+                    color: "#E53935",
+                    backgroundColor: "#FFF5F5",
+
+                    "&:hover": {
+                    backgroundColor: "#FFEBEE",
+                    borderColor: "#E53935",
+                    },
+
+                    "&:active": {
+                    backgroundColor: "#FFF5F5",
+                    },
+                }}
+                >
+                <DeleteOutlined fontSize="small" />
+                </IconButton>
           </Stack>
 
           {/* Teléfono */}
@@ -213,6 +219,7 @@ function ClienteCard({
               mt: 0.65,
             }}
           >
+        
             <Typography
               component="span"
               sx={{
@@ -222,7 +229,7 @@ function ClienteCard({
               }}
             >
               {tieneDeuda
-                ? `Deuda del cliente: ${saldoFormateado}`
+                ? `Saldo pendiente: ${saldoFormateado}`
                 : "Sin deuda pendiente"}
             </Typography>
           </Box>
@@ -283,4 +290,4 @@ function ClienteCard({
   );
 }
 
-export default ClienteCard;
+export default ProveedorCard;
