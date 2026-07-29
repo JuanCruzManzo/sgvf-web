@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Fab,
@@ -39,6 +40,8 @@ const clientesSimulados: Cliente[] = [
 ];
 
 function ClientesPage() {
+  const navigate = useNavigate();
+
   const [busqueda, setBusqueda] = useState("");
 
   const clientesFiltrados = useMemo(() => {
@@ -129,7 +132,7 @@ function ClientesPage() {
             telefono={cliente.telefono}
             saldoPendiente={cliente.saldoPendiente}
             onVerMovimientos={() => {
-              console.log("Ver movimientos de:", cliente.nombre);
+              navigate(`/clientes/${cliente.id}`);
             }}
             onEditar={() => {
               console.log("Editar:", cliente.nombre);

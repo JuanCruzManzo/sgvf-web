@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Fab,
@@ -9,6 +10,7 @@ import {
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ProveedorCard from "./components/ProveedorCard";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 interface Proveedor {
   id: number;
@@ -53,6 +55,30 @@ const proveedoresSimulados: Proveedor[] = [
  * y la conexión con la API.
  */
 function ProveedoresPage() {
+  const navigate = useNavigate();
+
+  const [proveedorAEliminar, setProveedorAEliminar] = useState<{
+  id: number;
+  nombre: string;
+  } | null>(null);
+
+  const [eliminando, setEliminando] = useState(false);
+  const handleEliminarProveedor = () => {
+    if (!proveedorAEliminar) {
+      return;
+    }
+
+    setEliminando(true);
+
+    // Más adelante esto se reemplaza por el DELETE a la API.
+    console.log("Proveedor eliminado:", proveedorAEliminar.id);
+
+    setTimeout(() => {
+      setEliminando(false);
+      setProveedorAEliminar(null);
+    }, 600);
+  };
+
   const [busqueda, setBusqueda] = useState("");
 
   /**
@@ -150,13 +176,16 @@ function ProveedoresPage() {
             telefono={proveedor.telefono}
             saldoPendiente={proveedor.saldoPendiente}
             onVerMovimientos={() => {
-              console.log("Ver movimientos de:", proveedor.nombre);
+              navigate(`/proveedores/${proveedor.id}`);
             }}
             onEditar={() => {
-              console.log("Editar:", proveedor.nombre);
+              navigate(`/proveedores/${proveedor.id}/editar`);
             }}
             onEliminar={() => {
-              console.log("Eliminar:", proveedor.nombre);
+              setProveedorAEliminar({
+                id: proveedor.id,
+                nombre: proveedor.nombre,
+              });
             }}
           />
         ))}
@@ -189,9 +218,7 @@ function ProveedoresPage() {
       {/* Acción para registrar un proveedor nuevo */}
       <Fab
         aria-label="Agregar proveedor"
-        onClick={() => {
-          // Más adelante navegar a la pantalla de creación de proveedor.
-        }}
+        onClick={() => navigate("/proveedores/nuevo")}
         sx={{
           position: "fixed",
           right: 20,
@@ -206,6 +233,24 @@ function ProveedoresPage() {
       >
         <AddRoundedIcon />
       </Fab>
+      <ConfirmDialog
+        open={Boolean(proveedorAEliminar)}
+        title="Eliminar proveedor"
+        description={
+          proveedorAEliminar
+            ? `¿Estás seguro de que querés eliminar a ${proveedorAEliminar.nombre}?`
+            : ""
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        loading={eliminando}
+        onClose={() => {
+          if (!eliminando) {
+            setProveedorAEliminar(null);
+          }
+        }}
+        onConfirm={handleEliminarProveedor}
+      />
     </Box>
   );
 }
