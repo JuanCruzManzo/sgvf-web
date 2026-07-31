@@ -10,6 +10,7 @@ import {
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ClienteCard from "./components/ClienteCard";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 interface Cliente {
   id: number;
@@ -57,6 +58,29 @@ function ClientesPage() {
         cliente.telefono.toLowerCase().includes(texto)
     );
   }, [busqueda]);
+
+  const [clienteAEliminar, setClienteAEliminar] = useState<{
+  id: number;
+  nombre: string;
+  } | null>(null);
+
+  const [eliminando, setEliminando] = useState(false);
+
+  const handleEliminarCliente = () => {
+  if (!clienteAEliminar) {
+    return;
+  }
+
+  setEliminando(true);
+
+  // Más adelante se reemplaza por el DELETE a la API.
+  console.log("Cliente eliminado:", clienteAEliminar.id);
+
+  setTimeout(() => {
+    setEliminando(false);
+    setClienteAEliminar(null);
+  }, 600);
+  };
 
   return (
     <Box>
@@ -135,11 +159,14 @@ function ClientesPage() {
               navigate(`/clientes/${cliente.id}`);
             }}
             onEditar={() => {
-              console.log("Editar:", cliente.nombre);
+              navigate(`/clientes/${cliente.id}/editar`);
             }}
             onEliminar={() => {
-              console.log("Eliminar:", cliente.nombre);
-            }}
+            setClienteAEliminar({
+              id: cliente.id,
+              nombre: cliente.nombre,
+            });
+          }}
           />
         ))}
       </Box>
@@ -169,9 +196,7 @@ function ClientesPage() {
 
       <Fab
         aria-label="Agregar cliente"
-        onClick={() => {
-          // Más adelante navegar a la pantalla de creación de cliente.
-        }}
+        onClick={() => navigate("/clientes/nuevo")}
         sx={{
           position: "fixed",
           right: 20,
@@ -186,6 +211,24 @@ function ClientesPage() {
       >
         <AddRoundedIcon />
       </Fab>
+      <ConfirmDialog
+        open={Boolean(clienteAEliminar)}
+        title="Eliminar cliente"
+        description={
+          clienteAEliminar
+            ? `¿Estás seguro de que querés eliminar a ${clienteAEliminar.nombre}?`
+            : ""
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        loading={eliminando}
+        onClose={() => {
+          if (!eliminando) {
+            setClienteAEliminar(null);
+          }
+        }}
+        onConfirm={handleEliminarCliente}
+      />
     </Box>
   );
 }

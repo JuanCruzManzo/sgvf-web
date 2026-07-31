@@ -15,6 +15,10 @@ import ProveedorDetallePage from "../pages/Proveedores/ProveedorDetallePage";
 import ClienteDetallePage from "../pages/Clientes/ClienteDetallePage";
 import NuevoProveedorPage from "../pages/Proveedores/NuevoProveedorPage";
 import EditarProveedorPage from "../pages/Proveedores/EditarProveedorPage";
+import NuevoClientePage from "../pages/Clientes/NuevoClientePage";
+import EditarClientePage from "../pages/Clientes/EditarClientePage";
+import NuevoProductoPage from "../pages/Productos/NuevoProductoPage";
+import EditarProductoPage from "../pages/Productos/EditarProductoPage";
 
 /**
  * Centraliza las rutas principales del sistema.
@@ -45,6 +49,10 @@ function AppRoutes() {
           <Route path="/clientes/:id" element={<ClienteDetallePage />} />
           <Route path="/proveedores/nuevo" element={<NuevoProveedorPage />}/>
           <Route path="/proveedores/:id/editar" element={<EditarProveedorPage />}/>
+          <Route path="/clientes/nuevo" element={<NuevoClientePage />}/>
+          <Route path="/clientes/:id/editar" element={<EditarClientePage />}/>
+          <Route path="/productos/nuevo" element={<NuevoProductoPage />}/>
+          <Route path="/productos/:id/editar" element={<EditarProductoPage />}/>
         </Route>
       </Route>
     </Routes>

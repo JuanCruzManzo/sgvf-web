@@ -15,7 +15,9 @@ import {
   Typography,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 import MovimientoClienteCard from "./components/MovimientoClienteCard";
+import MovimientoClienteDialog from "./components/MovimientoClienteDialog";
 
 interface MovimientoCliente {
   id: number;
@@ -126,6 +128,36 @@ function ClienteDetallePage() {
   });
 
   const tieneDeuda = cliente.saldoPendiente > 0;
+
+  const [dialogoMovimiento, setDialogoMovimiento] = useState<
+  "deuda" | "cobro" | null
+  >(null);
+
+  const [guardandoMovimiento, setGuardandoMovimiento] = useState(false);
+  
+  const handleGuardarMovimiento = (data: {
+  monto: number;
+  fecha: string;
+  observaciones: string;
+  }) => {
+  if (!dialogoMovimiento) {
+    return;
+  }
+
+  setGuardandoMovimiento(true);
+
+  // Más adelante se reemplaza por el POST a la API.
+  console.log("Nuevo movimiento del cliente:", {
+    clienteId: cliente.id,
+    tipo: dialogoMovimiento,
+    ...data,
+  });
+
+  setTimeout(() => {
+    setGuardandoMovimiento(false);
+    setDialogoMovimiento(null);
+  }, 600);
+  };
 
   return (
     <Box sx={{ pb: 10 }}>
@@ -290,7 +322,7 @@ function ClienteDetallePage() {
           variant="outlined"
           startIcon={<ReceiptLongOutlined />}
           onClick={() => {
-            console.log("Registrar deuda");
+            setDialogoMovimiento("deuda");
           }}
           sx={{
             minHeight: 46,
@@ -313,7 +345,7 @@ function ClienteDetallePage() {
           variant="outlined"
           startIcon={<PaymentsOutlined />}
           onClick={() => {
-            console.log("Registrar cobro");
+            setDialogoMovimiento("cobro");
           }}
           sx={{
             minHeight: 46,
@@ -408,6 +440,17 @@ function ClienteDetallePage() {
           </Card>
         )}
       </Box>
+      <MovimientoClienteDialog
+        open={dialogoMovimiento !== null}
+        tipo={dialogoMovimiento ?? "deuda"}
+        loading={guardandoMovimiento}
+        onClose={() => {
+          if (!guardandoMovimiento) {
+            setDialogoMovimiento(null);
+          }
+        }}
+        onSubmit={handleGuardarMovimiento}
+      />
     </Box>
   );
 }

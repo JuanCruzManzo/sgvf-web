@@ -1,74 +1,105 @@
 import {
   Box,
   Card,
-  CardActionArea,
+  CardContent,
   Chip,
+  IconButton,
+  Stack,
   Typography,
 } from "@mui/material";
-import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  Inventory2Rounded,
+} from "@mui/icons-material";
 
 interface ProductCardProps {
   nombre: string;
   descripcion?: string;
   stock: number;
   stockMinimo: number;
+  onEditar?: () => void;
+  onEliminar?: () => void;
 }
 
-/**
- * Representa un producto dentro del listado.
- *
- * Muestra la cantidad disponible y advierte visualmente
- * cuando el stock es igual o inferior al mínimo establecido.
- */
 function ProductCard({
   nombre,
   descripcion,
   stock,
   stockMinimo,
+  onEditar,
+  onEliminar,
 }: ProductCardProps) {
-  const tieneStockBajo = stock <= stockMinimo;
+  const sinStock = stock === 0;
+  const tieneStockBajo = stock > 0 && stock <= stockMinimo;
+
+  const colorEstado = sinStock
+    ? "#D32F2F"
+    : tieneStockBajo
+      ? "#D97706"
+      : "#2E7D32";
+
+  const fondoEstado = sinStock
+    ? "#FFEBEE"
+    : tieneStockBajo
+      ? "#FFF4E5"
+      : "#E8F5E9";
 
   return (
     <Card
       elevation={0}
       sx={{
         borderRadius: "16px",
-        border: "1px solid #EEEEEE",
+        border: "1px solid #DDDDDD",
         backgroundColor: "#FFFFFF",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
         overflow: "hidden",
       }}
     >
-      <CardActionArea
+      <CardContent
         sx={{
           p: 1.75,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
+          "&:last-child": {
+            pb: 1.75,
+          },
         }}
       >
-        {/* Ícono representativo del producto */}
         <Box
           sx={{
-            width: 46,
-            height: 46,
-            flexShrink: 0,
-            borderRadius: "13px",
-            backgroundColor: tieneStockBajo ? "#FFF4E5" : "#E8F5E9",
-            color: tieneStockBajo ? "#ED8A00" : "#2E7D32",
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "46px minmax(0, 1fr) auto",
+            columnGap: 1.5,
+            rowGap: 0.35,
             alignItems: "center",
-            justifyContent: "center",
           }}
         >
-          <Inventory2RoundedIcon />
-        </Box>
+          {/* Ícono */}
+          <Box
+            sx={{
+              gridColumn: 1,
+              gridRow: "1 / span 3",
+              width: 46,
+              height: 46,
+              alignSelf: "start",
+              borderRadius: "13px",
+              backgroundColor: fondoEstado,
+              color: colorEstado,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Inventory2Rounded />
+          </Box>
 
-        {/* Información principal */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* Nombre */}
           <Typography
             noWrap
             sx={{
+              gridColumn: 2,
+              gridRow: 1,
+              width: "100%",
+              textAlign: "left",
               fontSize: "0.98rem",
               fontWeight: 700,
               color: "#333333",
@@ -77,11 +108,77 @@ function ProductCard({
             {nombre}
           </Typography>
 
+          {/* Acciones */}
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{
+              gridColumn: 3,
+              gridRow: "1 / span 2",
+              justifySelf: "end",
+              alignSelf: "center",
+            }}
+          >
+            <IconButton
+              size="small"
+              aria-label={`Editar producto ${nombre}`}
+              onClick={onEditar}
+              sx={{
+                width: 32,
+                height: 32,
+                border: "1px solid #BDBDBD",
+                borderRadius: "8px",
+                color: "#616161",
+                backgroundColor: "#F7F7F7",
+
+                "&:hover": {
+                  backgroundColor: "#EEEEEE",
+                  borderColor: "#9E9E9E",
+                },
+
+                "&:active": {
+                  backgroundColor: "#F7F7F7",
+                },
+              }}
+            >
+              <EditOutlined fontSize="small" />
+            </IconButton>
+
+            <IconButton
+              size="small"
+              aria-label={`Eliminar producto ${nombre}`}
+              onClick={onEliminar}
+              sx={{
+                width: 32,
+                height: 32,
+                border: "1px solid #EF9A9A",
+                borderRadius: "8px",
+                color: "#E53935",
+                backgroundColor: "#FFF5F5",
+
+                "&:hover": {
+                  backgroundColor: "#FFEBEE",
+                  borderColor: "#E53935",
+                },
+
+                "&:active": {
+                  backgroundColor: "#FFF5F5",
+                },
+              }}
+            >
+              <DeleteOutlined fontSize="small" />
+            </IconButton>
+          </Stack>
+
+          {/* Descripción */}
           {descripcion && (
             <Typography
               noWrap
               sx={{
-                mt: 0.15,
+                gridColumn: 2,
+                gridRow: 2,
+                width: "100%",
+                textAlign: "left",
                 fontSize: "0.78rem",
                 color: "text.secondary",
               }}
@@ -90,31 +187,28 @@ function ProductCard({
             </Typography>
           )}
 
+          {/* Stock */}
           <Box
             sx={{
-              mt: 0.75,
+              gridColumn: "2 / span 2",
+              gridRow: 3,
+              mt: 0.65,
               display: "flex",
               alignItems: "center",
+              flexWrap: "wrap",
               gap: 0.75,
             }}
           >
             <Typography
               sx={{
                 fontSize: "0.82rem",
-                color: "text.secondary",
-              }}
-            >
-              Stock:
-            </Typography>
-
-            <Typography
-              sx={{
-                fontSize: "0.85rem",
                 fontWeight: 700,
-                color: tieneStockBajo ? "#D97706" : "#2E7D32",
+                color: colorEstado,
               }}
             >
-              {stock} cajones
+              {sinStock
+                ? "Sin stock"
+                : `Stock: ${stock} cajones`}
             </Typography>
 
             {tieneStockBajo && (
@@ -126,15 +220,27 @@ function ProductCard({
                   backgroundColor: "#FFF4E5",
                   color: "#D97706",
                   fontSize: "0.68rem",
-                  fontWeight: 600,
+                  fontWeight: 700,
+                }}
+              />
+            )}
+
+            {sinStock && (
+              <Chip
+                label="Reponer"
+                size="small"
+                sx={{
+                  height: 22,
+                  backgroundColor: "#FFEBEE",
+                  color: "#D32F2F",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
                 }}
               />
             )}
           </Box>
         </Box>
-
-        <ChevronRightRoundedIcon sx={{ color: "text.disabled" }} />
-      </CardActionArea>
+      </CardContent>
     </Card>
   );
 }
