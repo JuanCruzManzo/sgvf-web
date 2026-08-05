@@ -10,6 +10,7 @@ import NuevaVentaPage from "../pages/Ventas/NuevaVentaPage";
 import ClientesPage from "../pages/Clientes/ClientesPage";
 import ProveedoresPage from "../pages/Proveedores/ProveedoresPage";
 import VentasPage from "../pages/Ventas/VentasPage";
+import VentaDetallePage from "../pages/Ventas/VentaDetallePage";
 import EstadisticasPage from "../pages/Estadisticas/EstadisticasPage";
 import ProveedorDetallePage from "../pages/Proveedores/ProveedorDetallePage";
 import ClienteDetallePage from "../pages/Clientes/ClienteDetallePage";
@@ -41,6 +42,7 @@ function AppRoutes() {
           <Route path="productos" element={<ProductosPage />} />
           <Route path="ventas" element={<VentasPage />} />
           <Route path="ventas/nueva" element={<NuevaVentaPage />} />
+          <Route path="/ventas/:id" element={<VentaDetallePage />}/>
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="proveedores" element={<ProveedoresPage />} />
           <Route path="estadisticas" element={<EstadisticasPage />} />
