@@ -188,7 +188,7 @@ function VentaCard({
 
           <Typography
             sx={{
-              fontSize: "0.95rem",
+              fontSize: "0.78rem",
               fontWeight: 800,
               color: "#2E7D32",
             }}

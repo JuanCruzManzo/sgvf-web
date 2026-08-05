@@ -3,6 +3,7 @@ import {
   CancelOutlined,
   PersonOutlineRounded,
   PointOfSaleOutlined,
+  PrintOutlined,
   ReceiptLongOutlined,
   StorefrontOutlined,
 } from "@mui/icons-material";
@@ -80,8 +81,8 @@ const ventasSimuladas: Venta[] = [
     cliente: "Consumidor final",
     usuario: "Juan Rodríguez",
     total: 32000,
-    estadoPago: "Pendiente",
-    saldoPendiente: 32000,
+    estadoPago: "Pagado",
+    saldoPendiente: 0,
     detalles: [
       {
         id: 3,
@@ -643,6 +644,33 @@ function VentaDetallePage() {
         </CardContent>
       </Card>
 
+      {/* Reimprimir ticket */}
+      <Button
+        fullWidth
+        variant="contained"
+        startIcon={<PrintOutlined />}
+        onClick={() => {
+          console.log("Reimprimir ticket de la venta:", venta.id);
+        }}
+        sx={{
+          mt: 2,
+          minHeight: 48,
+          borderRadius: "12px",
+          backgroundColor: "#2E7D32",
+          color: "#FFFFFF",
+          fontWeight: 700,
+          textTransform: "none",
+          boxShadow: "none",
+
+          "&:hover": {
+            backgroundColor: "#256628",
+            boxShadow: "none",
+          },
+        }}
+      >
+        Imprimir ticket
+      </Button>
+
       {/* Cancelar */}
       <Button
         fullWidth
@@ -650,7 +678,7 @@ function VentaDetallePage() {
         startIcon={<CancelOutlined />}
         onClick={() => setDialogoCancelarAbierto(true)}
         sx={{
-          mt: 2,
+          mt: 1.25,
           minHeight: 48,
           borderRadius: "12px",
           borderColor: "#EF9A9A",

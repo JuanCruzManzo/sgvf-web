@@ -46,7 +46,7 @@ const ventasSimuladas: Venta[] = [
     cliente: "Consumidor final",
     fecha: "05/08/2026 12:18",
     total: 32000,
-    estadoPago: "Pendiente",
+    estadoPago: "Pagado",
     cantidadProductos: 1,
   },
   {

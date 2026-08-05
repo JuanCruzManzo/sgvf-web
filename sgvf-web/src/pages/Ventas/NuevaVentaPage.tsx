@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 
 import AgregarProductoVentaDialog from "./components/AgregarProductoVentaDialog";
 import VentaProductoCard from "./components/VentaProductoCard";
+import VentaRegistradaDialog from "./components/VentaRegistradaDialog";
 
 interface ClienteDisponible {
   id: number;
@@ -48,6 +49,8 @@ interface ProductoAgregado {
 }
 
 type EstadoPago = "Pagado" | "Pendiente";
+
+const CONSUMIDOR_FINAL = "consumidor-final";
 
 const clientesSimulados: ClienteDisponible[] = [
   {
@@ -95,7 +98,7 @@ const productosDisponibles: ProductoDisponible[] = [
 function NuevaVentaPage() {
   const navigate = useNavigate();
 
-  const [clienteId, setClienteId] = useState("");
+  const [clienteId, setClienteId] = useState(CONSUMIDOR_FINAL);
   const [estadoPago, setEstadoPago] =
     useState<EstadoPago>("Pagado");
 
@@ -218,6 +221,12 @@ function NuevaVentaPage() {
     );
   };
 
+  const [dialogoVentaRegistrada, setDialogoVentaRegistrada] =
+  useState(false);
+
+  const [ventaRegistradaId, setVentaRegistradaId] =
+  useState<number | null>(null);
+
   const handleConfirmarVenta = () => {
     if (productosAgregados.length === 0) {
       return;
@@ -226,7 +235,10 @@ function NuevaVentaPage() {
     setConfirmandoVenta(true);
 
     const venta = {
-      clienteId: clienteId ? Number(clienteId) : null,
+      clienteId:
+        clienteId === CONSUMIDOR_FINAL
+        ? null
+        : Number(clienteId),
       estadoPago,
       detalles: productosAgregados.map((producto) => ({
         productoId: producto.productoId,
@@ -237,11 +249,14 @@ function NuevaVentaPage() {
 
     console.log("Venta a registrar:", venta);
 
-    setTimeout(() => {
+      setTimeout(() => {
+      const idSimulado = 26;
+
       setConfirmandoVenta(false);
-      navigate("/ventas");
+      setVentaRegistradaId(idSimulado);
+      setDialogoVentaRegistrada(true);
     }, 700);
-  };
+      };
 
   return (
     <Box sx={{ pb: 12 }}>
@@ -342,7 +357,15 @@ function NuevaVentaPage() {
             fullWidth
             label="Seleccionar cliente"
             value={clienteId}
-            onChange={(event) => setClienteId(event.target.value)}
+            onChange={(event) => {
+              const nuevoClienteId = event.target.value;
+
+              setClienteId(nuevoClienteId);
+
+              if (nuevoClienteId === CONSUMIDOR_FINAL) {
+                setEstadoPago("Pagado");
+              }
+            }}
             slotProps={{
               inputLabel: {
                 shrink: true,
@@ -355,7 +378,9 @@ function NuevaVentaPage() {
               },
             }}
           >
-            <MenuItem value="">Consumidor final</MenuItem>
+            <MenuItem value={CONSUMIDOR_FINAL}>
+              Consumidor final
+            </MenuItem>
 
             {clientesSimulados.map((cliente) => (
               <MenuItem key={cliente.id} value={cliente.id}>
@@ -536,7 +561,10 @@ function NuevaVentaPage() {
               Pagado
             </ToggleButton>
 
-            <ToggleButton value="Pendiente">
+            <ToggleButton
+              value="Pendiente"
+              disabled={clienteId === CONSUMIDOR_FINAL}
+            >
               Pendiente
             </ToggleButton>
           </ToggleButtonGroup>
@@ -639,6 +667,26 @@ function NuevaVentaPage() {
         onClose={cerrarDialogoProducto}
         onSubmit={handleGuardarProducto}
       />
+      {ventaRegistradaId !== null && (
+        <VentaRegistradaDialog
+          open={dialogoVentaRegistrada}
+          numeroVenta={ventaRegistradaId}
+          onImprimir={() => {
+            console.log(
+              "Imprimir ticket de la venta:",
+              ventaRegistradaId
+            );
+          }}
+          onVerDetalle={() => {
+            navigate(`/ventas/${ventaRegistradaId}`);
+          }}
+          onVolverVentas={() => {
+            navigate("/ventas", {
+              replace: true,
+            });
+          }}
+        />
+      )}
     </Box>
   );
 }
