@@ -1,4 +1,5 @@
-import { AppBar, Avatar, Box, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography } from "@mui/material";
+import UserMenu from "./UserMenu";
 
 function TopBar() {
   return (
@@ -25,15 +26,11 @@ function TopBar() {
           </Typography>
         </Box>
 
-        <Avatar
-          sx={{
-            backgroundColor: "#E8F5E9",
-            color: "#2E7D32",
-            fontWeight: 700,
-          }}
-        >
-          JR
-        </Avatar>
+        <UserMenu
+          nombre="Juan Rodríguez"
+          rol="Administrador"
+          iniciales="JR"
+        />
       </Toolbar>
     </AppBar>
   );

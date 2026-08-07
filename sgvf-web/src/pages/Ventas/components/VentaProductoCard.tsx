@@ -2,7 +2,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   IconButton,
   Stack,
   Typography,
@@ -10,40 +9,37 @@ import {
 import {
   DeleteOutlined,
   EditOutlined,
-  Inventory2Rounded,
+  Inventory2Outlined,
 } from "@mui/icons-material";
 
-interface ProductCardProps {
+interface VentaProductoCardProps {
   nombre: string;
-  descripcion?: string;
-  stock: number;
-  stockMinimo: number;
+  cantidadCajones: number;
+  precioUnitario: number;
   onEditar?: () => void;
   onEliminar?: () => void;
 }
 
-function ProductCard({
+function VentaProductoCard({
   nombre,
-  descripcion,
-  stock,
-  stockMinimo,
+  cantidadCajones,
+  precioUnitario,
   onEditar,
   onEliminar,
-}: ProductCardProps) {
-  const sinStock = stock === 0;
-  const tieneStockBajo = stock > 0 && stock <= stockMinimo;
+}: VentaProductoCardProps) {
+  const subtotal = cantidadCajones * precioUnitario;
 
-  const colorEstado = sinStock
-    ? "#D32F2F"
-    : tieneStockBajo
-      ? "#D97706"
-      : "#2E7D32";
+  const precioFormateado = precioUnitario.toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  });
 
-  const fondoEstado = sinStock
-    ? "#FFEBEE"
-    : tieneStockBajo
-      ? "#FFF4E5"
-      : "#E8F5E9";
+  const subtotalFormateado = subtotal.toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  });
 
   return (
     <Card
@@ -67,29 +63,29 @@ function ProductCard({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "46px minmax(0, 1fr) auto",
+            gridTemplateColumns: "44px minmax(0, 1fr) auto",
             columnGap: 1.5,
             rowGap: 0.35,
             alignItems: "center",
           }}
         >
-          {/* Ícono */}
+          {/* Ícono del producto */}
           <Box
             sx={{
               gridColumn: 1,
               gridRow: "1 / span 3",
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               alignSelf: "start",
-              borderRadius: "13px",
-              backgroundColor: fondoEstado,
-              color: colorEstado,
+              borderRadius: "12px",
+              backgroundColor: "#E8F5E9",
+              color: "#2E7D32",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Inventory2Rounded />
+            <Inventory2Outlined />
           </Box>
 
           {/* Nombre */}
@@ -99,7 +95,6 @@ function ProductCard({
               gridColumn: 2,
               gridRow: 1,
               width: "100%",
-              textAlign: "left",
               fontSize: "0.98rem",
               fontWeight: 700,
               color: "#333333",
@@ -121,7 +116,7 @@ function ProductCard({
           >
             <IconButton
               size="small"
-              aria-label={`Editar producto ${nombre}`}
+              aria-label={`Editar ${nombre}`}
               onClick={onEditar}
               sx={{
                 width: 32,
@@ -135,10 +130,6 @@ function ProductCard({
                   backgroundColor: "#EEEEEE",
                   borderColor: "#9E9E9E",
                 },
-
-                "&:active": {
-                  backgroundColor: "#F7F7F7",
-                },
               }}
             >
               <EditOutlined fontSize="small" />
@@ -146,7 +137,7 @@ function ProductCard({
 
             <IconButton
               size="small"
-              aria-label={`Eliminar producto ${nombre}`}
+              aria-label={`Eliminar ${nombre}`}
               onClick={onEliminar}
               sx={{
                 width: 32,
@@ -160,84 +151,58 @@ function ProductCard({
                   backgroundColor: "#FFEBEE",
                   borderColor: "#E53935",
                 },
-
-                "&:active": {
-                  backgroundColor: "#FFF5F5",
-                },
               }}
             >
               <DeleteOutlined fontSize="small" />
             </IconButton>
           </Stack>
 
-          {/* Descripción */}
-          {descripcion && (
-            <Typography
-              noWrap
-              sx={{
-                gridColumn: 2,
-                gridRow: 2,
-                width: "100%",
-                textAlign: "left",
-                fontSize: "0.78rem",
-                color: "text.secondary",
-              }}
-            >
-              {descripcion}
-            </Typography>
-          )}
+          {/* Cantidad y precio unitario */}
+          <Typography
+            sx={{
+              gridColumn: 2,
+              gridRow: 2,
+              fontSize: "0.79rem",
+              color: "text.secondary",
+            }}
+          >
+            {cantidadCajones}{" "}
+            {cantidadCajones === 1 ? "cajón" : "cajones"} ·{" "}
+            {precioFormateado} c/u
+          </Typography>
 
-          {/* Stock */}
+          {/* Subtotal */}
           <Box
             sx={{
               gridColumn: "2 / span 2",
               gridRow: 3,
-              mt: 0.65,
+              mt: 0.75,
+              pt: 0.85,
+              borderTop: "1px solid #E5E5E5",
               display: "flex",
               alignItems: "center",
-              flexWrap: "wrap",
-              gap: 0.75,
+              justifyContent: "space-between",
+              gap: 1,
             }}
           >
             <Typography
               sx={{
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                color: colorEstado,
+                fontSize: "0.8rem",
+                color: "text.secondary",
               }}
             >
-              {sinStock
-                ? "Sin stock"
-                : `Stock: ${stock} cajones`}
+              Subtotal
             </Typography>
 
-            {tieneStockBajo && (
-              <Chip
-                label="Stock bajo"
-                size="small"
-                sx={{
-                  height: 22,
-                  backgroundColor: "#FFF4E5",
-                  color: "#D97706",
-                  fontSize: "0.68rem",
-                  fontWeight: 700,
-                }}
-              />
-            )}
-
-            {sinStock && (
-              <Chip
-                label="Reponer"
-                size="small"
-                sx={{
-                  height: 22,
-                  backgroundColor: "#FFEBEE",
-                  color: "#D32F2F",
-                  fontSize: "0.68rem",
-                  fontWeight: 700,
-                }}
-              />
-            )}
+            <Typography
+              sx={{
+                fontSize: "0.95rem",
+                fontWeight: 800,
+                color: "#2E7D32",
+              }}
+            >
+              {subtotalFormateado}
+            </Typography>
           </Box>
         </Box>
       </CardContent>
@@ -245,4 +210,4 @@ function ProductCard({
   );
 }
 
-export default ProductCard;
+export default VentaProductoCard;
