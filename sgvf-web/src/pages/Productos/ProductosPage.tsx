@@ -1,4 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  AddRounded,
+  SearchRounded,
+} from "@mui/icons-material";
+
 import {
   Box,
   Chip,
@@ -8,64 +14,26 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  AddRounded,
-  SearchRounded,
-} from "@mui/icons-material";
+
 import { useNavigate } from "react-router-dom";
+
 import ConfirmDialog from "../../components/ConfirmDialog";
 import ProductCard from "./components/ProductCard";
 
+import {
+  obtenerProductos,
+  eliminarProducto,
+  type Producto,
+} from "../../services/productoService";
+
 type FiltroStock = "todos" | "bajo" | "sinStock";
-
-interface Producto {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  stock: number;
-  stockMinimo: number;
-}
-
-const productosSimulados: Producto[] = [
-  {
-    id: 1,
-    nombre: "Tomate redondo",
-    descripcion: "Cajón de tomate de primera",
-    stock: 28,
-    stockMinimo: 5,
-  },
-  {
-    id: 2,
-    nombre: "Papa",
-    descripcion: "Cajón de papa blanca",
-    stock: 15,
-    stockMinimo: 5,
-  },
-  {
-    id: 3,
-    nombre: "Lechuga de manteca",
-    descripcion: "Cajón de lechuga fresca",
-    stock: 4,
-    stockMinimo: 6,
-  },
-  {
-    id: 4,
-    nombre: "Morrón colorado",
-    descripcion: "Cajón de morrón",
-    stock: 0,
-    stockMinimo: 4,
-  },
-  {
-    id: 5,
-    nombre: "Zapallito redondo",
-    descripcion: "Cajón de zapallito",
-    stock: 12,
-    stockMinimo: 5,
-  },
-];
 
 function ProductosPage() {
   const navigate = useNavigate();
+
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroStock, setFiltroStock] =
@@ -78,42 +46,75 @@ function ProductosPage() {
 
   const [eliminando, setEliminando] = useState(false);
 
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        setCargando(true);
+        setErrorCarga(false);
+
+        const data = await obtenerProductos();
+
+        setProductos(data);
+      } catch (error) {
+        console.error("Error al cargar productos:", error);
+
+        setErrorCarga(true);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarProductos();
+  }, []);
+
   const productosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
-    return productosSimulados.filter((producto) => {
-      const coincideBusqueda =
-        !texto ||
-        producto.nombre.toLowerCase().includes(texto) ||
-        producto.descripcion.toLowerCase().includes(texto);
+    return productos
+      .filter((producto) => producto.activo)
+      .filter((producto) => {
+        const coincideBusqueda =
+          !texto ||
+          producto.nombre.toLowerCase().includes(texto) ||
+          producto.descripcion.toLowerCase().includes(texto);
 
-      const tieneStockBajo =
-        producto.stock > 0 &&
-        producto.stock <= producto.stockMinimo;
+        const tieneStockBajo =
+          producto.stock > 0 &&
+          producto.stock <= producto.stockMinimo;
 
-      const coincideFiltro =
-        filtroStock === "todos" ||
-        (filtroStock === "bajo" && tieneStockBajo) ||
-        (filtroStock === "sinStock" && producto.stock === 0);
+        const coincideFiltro =
+          filtroStock === "todos" ||
+          (filtroStock === "bajo" && tieneStockBajo) ||
+          (filtroStock === "sinStock" && producto.stock === 0);
 
-      return coincideBusqueda && coincideFiltro;
-    });
-  }, [busqueda, filtroStock]);
+        return coincideBusqueda && coincideFiltro;
+      });
+  }, [productos, busqueda, filtroStock]);
 
-  const handleEliminarProducto = () => {
+  const handleEliminarProducto = async () => {
     if (!productoAEliminar) {
       return;
     }
 
-    setEliminando(true);
+    try {
+      setEliminando(true);
 
-    // Más adelante se reemplaza por el DELETE a la API.
-    console.log("Producto eliminado:", productoAEliminar.id);
+      await eliminarProducto(productoAEliminar.id);
 
-    setTimeout(() => {
-      setEliminando(false);
+      setProductos((productosActuales) =>
+        productosActuales.filter(
+          (producto) => producto.id !== productoAEliminar.id
+        )
+      );
+
       setProductoAEliminar(null);
-    }, 600);
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+
+      alert("No se pudo eliminar el producto.");
+    } finally {
+      setEliminando(false);
+    }
   };
 
   return (
@@ -153,13 +154,18 @@ function ProductosPage() {
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "text.secondary" }} />
+                <SearchRounded
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                />
               </InputAdornment>
             ),
           },
         }}
         sx={{
           mb: 1.5,
+
           "& .MuiOutlinedInput-root": {
             borderRadius: "14px",
             backgroundColor: "#FFFFFF",
@@ -184,13 +190,23 @@ function ProductosPage() {
           sx={{
             flexShrink: 0,
             fontWeight: 700,
+
             backgroundColor:
-              filtroStock === "todos" ? "#2E7D32" : "#FFFFFF",
+              filtroStock === "todos"
+                ? "#2E7D32"
+                : "#FFFFFF",
+
             color:
-              filtroStock === "todos" ? "#FFFFFF" : "#555555",
+              filtroStock === "todos"
+                ? "#FFFFFF"
+                : "#555555",
+
             border: "1px solid",
+
             borderColor:
-              filtroStock === "todos" ? "#2E7D32" : "#D5D5D5",
+              filtroStock === "todos"
+                ? "#2E7D32"
+                : "#D5D5D5",
           }}
         />
 
@@ -201,13 +217,23 @@ function ProductosPage() {
           sx={{
             flexShrink: 0,
             fontWeight: 700,
+
             backgroundColor:
-              filtroStock === "bajo" ? "#FFF4E5" : "#FFFFFF",
+              filtroStock === "bajo"
+                ? "#FFF4E5"
+                : "#FFFFFF",
+
             color:
-              filtroStock === "bajo" ? "#D97706" : "#555555",
+              filtroStock === "bajo"
+                ? "#D97706"
+                : "#555555",
+
             border: "1px solid",
+
             borderColor:
-              filtroStock === "bajo" ? "#F5B85C" : "#D5D5D5",
+              filtroStock === "bajo"
+                ? "#F5B85C"
+                : "#D5D5D5",
           }}
         />
 
@@ -218,67 +244,61 @@ function ProductosPage() {
           sx={{
             flexShrink: 0,
             fontWeight: 700,
+
             backgroundColor:
-              filtroStock === "sinStock" ? "#FFEBEE" : "#FFFFFF",
+              filtroStock === "sinStock"
+                ? "#FFEBEE"
+                : "#FFFFFF",
+
             color:
-              filtroStock === "sinStock" ? "#D32F2F" : "#555555",
+              filtroStock === "sinStock"
+                ? "#D32F2F"
+                : "#555555",
+
             border: "1px solid",
+
             borderColor:
-              filtroStock === "sinStock" ? "#EF9A9A" : "#D5D5D5",
+              filtroStock === "sinStock"
+                ? "#EF9A9A"
+                : "#D5D5D5",
           }}
         />
       </Stack>
 
-      {/* Cantidad de resultados */}
-      <Typography
-        sx={{
-          mb: 1.25,
-          fontSize: "0.78rem",
-          color: "text.secondary",
-        }}
-      >
-        {productosFiltrados.length} productos encontrados
-      </Typography>
-
-      {/* Listado */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.25,
-          pb: 11,
-        }}
-      >
-        {productosFiltrados.map((producto) => (
-          <ProductCard
-            key={producto.id}
-            nombre={producto.nombre}
-            descripcion={producto.descripcion}
-            stock={producto.stock}
-            stockMinimo={producto.stockMinimo}
-            onEditar={() => {
-              navigate(`/productos/${producto.id}/editar`);
-            }}
-            onEliminar={() => {
-              setProductoAEliminar({
-                id: producto.id,
-                nombre: producto.nombre,
-              });
-            }}
-          />
-        ))}
-      </Box>
-
-      {/* Sin resultados */}
-      {productosFiltrados.length === 0 && (
+      {/* Cargando */}
+      {cargando && (
         <Box
           sx={{
-            py: 6,
+            py: 5,
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontWeight: 700 }}>
-            No encontramos productos
+          <Typography
+            sx={{
+              fontSize: "0.85rem",
+              color: "text.secondary",
+            }}
+          >
+            Cargando productos...
+          </Typography>
+        </Box>
+      )}
+
+      {/* Error */}
+      {!cargando && errorCarga && (
+        <Box
+          sx={{
+            py: 5,
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "#333333",
+            }}
+          >
+            No pudimos cargar los productos
           </Typography>
 
           <Typography
@@ -288,9 +308,83 @@ function ProductosPage() {
               color: "text.secondary",
             }}
           >
-            Probá modificando la búsqueda o el filtro seleccionado.
+            Verificá que el servidor esté funcionando.
           </Typography>
         </Box>
+      )}
+
+      {/* Contenido cargado correctamente */}
+      {!cargando && !errorCarga && (
+        <>
+          {/* Cantidad de resultados */}
+          <Typography
+            sx={{
+              mb: 1.25,
+              fontSize: "0.78rem",
+              color: "text.secondary",
+            }}
+          >
+            {productosFiltrados.length}{" "}
+            {productosFiltrados.length === 1
+              ? "producto encontrado"
+              : "productos encontrados"}
+          </Typography>
+
+          {/* Listado */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.25,
+              pb: 11,
+            }}
+          >
+            {productosFiltrados.map((producto) => (
+              <ProductCard
+                key={producto.id}
+                nombre={producto.nombre}
+                descripcion={producto.descripcion}
+                stock={producto.stock}
+                stockMinimo={producto.stockMinimo}
+                onEditar={() => {
+                  navigate(
+                    `/productos/${producto.id}/editar`
+                  );
+                }}
+                onEliminar={() => {
+                  setProductoAEliminar({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                  });
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* Sin resultados */}
+          {productosFiltrados.length === 0 && (
+            <Box
+              sx={{
+                py: 6,
+                textAlign: "center",
+              }}
+            >
+              <Typography sx={{ fontWeight: 700 }}>
+                No encontramos productos
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.5,
+                  fontSize: "0.85rem",
+                  color: "text.secondary",
+                }}
+              >
+                Probá modificando la búsqueda o el filtro seleccionado.
+              </Typography>
+            </Box>
+          )}
+        </>
       )}
 
       {/* Nuevo producto */}
@@ -303,7 +397,8 @@ function ProductosPage() {
           bottom: 88,
           backgroundColor: "#2E7D32",
           color: "#FFFFFF",
-          boxShadow: "0 8px 20px rgba(46, 125, 50, 0.25)",
+          boxShadow:
+            "0 8px 20px rgba(46, 125, 50, 0.25)",
 
           "&:hover": {
             backgroundColor: "#256628",

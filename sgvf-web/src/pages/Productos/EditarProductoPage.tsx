@@ -2,17 +2,27 @@ import {
   ArrowBackRounded,
   EditOutlined,
 } from "@mui/icons-material";
+
 import {
   Avatar,
   Box,
   Card,
   CardContent,
+  CircularProgress,
   IconButton,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import ProductoForm from "./components/ProductoForm";
+
+import {
+  actualizarProducto,
+  obtenerProductoPorId,
+  type Producto,
+} from "../../services/productoService";
 
 interface ProductoFormValues {
   nombre: string;
@@ -21,83 +31,132 @@ interface ProductoFormValues {
   stockMinimo: number;
 }
 
-const productosSimulados = [
-  {
-    id: 1,
-    nombre: "Tomate redondo",
-    descripcion: "Cajón de tomate de primera",
-    stock: 28,
-    stockMinimo: 5,
-  },
-  {
-    id: 2,
-    nombre: "Papa",
-    descripcion: "Cajón de papa blanca",
-    stock: 15,
-    stockMinimo: 5,
-  },
-  {
-    id: 3,
-    nombre: "Lechuga de manteca",
-    descripcion: "Cajón de lechuga fresca",
-    stock: 4,
-    stockMinimo: 6,
-  },
-  {
-    id: 4,
-    nombre: "Morrón colorado",
-    descripcion: "Cajón de morrón",
-    stock: 0,
-    stockMinimo: 4,
-  },
-  {
-    id: 5,
-    nombre: "Zapallito redondo",
-    descripcion: "Cajón de zapallito",
-    stock: 12,
-    stockMinimo: 5,
-  },
-];
-
 function EditarProductoPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [producto, setProducto] = useState<Producto | null>(null);
+
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  const producto = productosSimulados.find(
-    (item) => item.id === Number(id)
-  );
+  useEffect(() => {
+    const cargarProducto = async () => {
+      const productoId = Number(id);
 
-  if (!producto) {
+      if (!productoId) {
+        setErrorCarga(true);
+        setCargando(false);
+        return;
+      }
+
+      try {
+        setCargando(true);
+        setErrorCarga(false);
+
+        const data = await obtenerProductoPorId(productoId);
+
+        setProducto(data);
+      } catch (error) {
+        console.error("Error al cargar producto:", error);
+        setErrorCarga(true);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarProducto();
+  }, [id]);
+
+  const handleGuardarCambios = async (
+    values: ProductoFormValues
+  ) => {
+    if (!producto) {
+      return;
+    }
+
+    try {
+      setGuardando(true);
+
+      await actualizarProducto(producto.id, {
+        nombre: values.nombre,
+        descripcion: values.descripcion,
+        stock: values.stock,
+        stockMinimo: values.stockMinimo,
+        activo: producto.activo,
+      });
+
+      navigate("/productos", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error al actualizar producto:", error);
+
+      alert("No se pudo actualizar el producto.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  if (cargando) {
     return (
-      <Box sx={{ py: 6, textAlign: "center" }}>
-        <Typography sx={{ fontWeight: 700 }}>
-          Producto no encontrado
+      <Box
+        sx={{
+          py: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 1.5,
+        }}
+      >
+        <CircularProgress
+          size={30}
+          sx={{
+            color: "#2E7D32",
+          }}
+        />
+
+        <Typography
+          sx={{
+            fontSize: "0.85rem",
+            color: "text.secondary",
+          }}
+        >
+          Cargando producto...
         </Typography>
       </Box>
     );
   }
 
-  const handleGuardarCambios = (
-    values: ProductoFormValues
-  ) => {
-    setGuardando(true);
+  if (errorCarga || !producto) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          textAlign: "center",
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 700,
+          }}
+        >
+          No pudimos cargar el producto
+        </Typography>
 
-    // Más adelante se reemplaza por el PUT a la API.
-    console.log("Producto editado:", {
-      id: producto.id,
-      ...values,
-    });
-
-    setTimeout(() => {
-      setGuardando(false);
-
-      navigate("/productos", {
-        replace: true,
-      });
-    }, 600);
-  };
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontSize: "0.85rem",
+            color: "text.secondary",
+          }}
+        >
+          Verificá que el producto exista e intentá nuevamente.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 10 }}>
