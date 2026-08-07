@@ -10,42 +10,86 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ClienteForm from "./components/ClienteForm";
+import {
+  actualizarCliente,
+  obtenerClientePorId,
+} from "../../services/clienteService";
 
 interface ClienteFormValues {
   nombre: string;
   telefono: string;
 }
 
-const clientesSimulados = [
-  {
-    id: 1,
-    nombre: "Juan Pérez",
-    telefono: "223 555-1234",
-  },
-  {
-    id: 2,
-    nombre: "María Gómez",
-    telefono: "223 444-5678",
-  },
-  {
-    id: 3,
-    nombre: "Carlos Fernández",
-    telefono: "223 333-9012",
-  },
-];
-
 function EditarClientePage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [cliente, setCliente] = useState<ClienteFormValues | null>(null);
+  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  const cliente = clientesSimulados.find(
-    (item) => item.id === Number(id)
-  );
+  useEffect(() => {
+    const cargarCliente = async () => {
+      try {
+        if (!id) return;
+
+        const data = await obtenerClientePorId(Number(id));
+
+        setCliente({
+          nombre: data.nombre,
+          telefono: data.telefono,
+        });
+
+      } catch (error) {
+        console.error("Error obteniendo cliente:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarCliente();
+  }, [id]);
+
+
+  const handleGuardarCambios = async (
+    values: ClienteFormValues
+  ) => {
+    try {
+      setGuardando(true);
+
+      await actualizarCliente(
+        Number(id),
+        {
+          nombre: values.nombre,
+          telefono: values.telefono,
+        }
+      );
+
+      navigate("/clientes", {
+        replace: true,
+      });
+
+    } catch (error) {
+      console.error("Error actualizando cliente:", error);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+
+  if (cargando) {
+    return (
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <Typography>
+          Cargando cliente...
+        </Typography>
+      </Box>
+    );
+  }
+
 
   if (!cliente) {
     return (
@@ -57,28 +101,10 @@ function EditarClientePage() {
     );
   }
 
-  const handleGuardarCambios = (
-    values: ClienteFormValues
-  ) => {
-    setGuardando(true);
-
-    // Más adelante se reemplaza por el PUT a la API.
-    console.log("Cliente editado:", {
-      id: cliente.id,
-      ...values,
-    });
-
-    setTimeout(() => {
-      setGuardando(false);
-
-      navigate("/clientes", {
-        replace: true,
-      });
-    }, 600);
-  };
 
   return (
     <Box sx={{ pb: 10 }}>
+
       {/* Encabezado */}
       <Box
         sx={{
@@ -108,6 +134,7 @@ function EditarClientePage() {
           <ArrowBackRounded />
         </IconButton>
 
+
         <Box>
           <Typography
             component="h1"
@@ -130,7 +157,9 @@ function EditarClientePage() {
             Modificá los datos del cliente.
           </Typography>
         </Box>
+
       </Box>
+
 
       {/* Formulario */}
       <Card
@@ -142,6 +171,7 @@ function EditarClientePage() {
           boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
         }}
       >
+
         <CardContent
           sx={{
             p: 2,
@@ -150,6 +180,7 @@ function EditarClientePage() {
             },
           }}
         >
+
           <Box
             sx={{
               display: "flex",
@@ -158,6 +189,7 @@ function EditarClientePage() {
               mb: 2,
             }}
           >
+
             <Avatar
               sx={{
                 width: 42,
@@ -169,7 +201,9 @@ function EditarClientePage() {
               <EditOutlined />
             </Avatar>
 
+
             <Box>
+
               <Typography
                 sx={{
                   fontSize: "0.95rem",
@@ -180,6 +214,7 @@ function EditarClientePage() {
                 Datos del cliente
               </Typography>
 
+
               <Typography
                 sx={{
                   fontSize: "0.77rem",
@@ -188,8 +223,11 @@ function EditarClientePage() {
               >
                 Actualizá el nombre o el teléfono.
               </Typography>
+
             </Box>
+
           </Box>
+
 
           <ClienteForm
             initialValues={{
@@ -200,8 +238,12 @@ function EditarClientePage() {
             onSubmit={handleGuardarCambios}
             loading={guardando}
           />
+
+
         </CardContent>
+
       </Card>
+
     </Box>
   );
 }
