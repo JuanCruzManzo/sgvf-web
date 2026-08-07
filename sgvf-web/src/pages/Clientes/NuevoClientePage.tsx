@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ClienteForm from "./components/ClienteForm";
+import { crearCliente } from "../../services/clienteService";
 
 interface ClienteFormValues {
   nombre: string;
@@ -23,17 +24,22 @@ function NuevoClientePage() {
   const navigate = useNavigate();
   const [guardando, setGuardando] = useState(false);
 
-  const handleGuardar = (values: ClienteFormValues) => {
+const handleGuardar = async (values: ClienteFormValues) => {
+  try {
     setGuardando(true);
 
-    // Más adelante se reemplaza por el POST a la API.
-    console.log("Nuevo cliente:", values);
+    await crearCliente({
+      nombre: values.nombre,
+      telefono: values.telefono,
+    });
 
-    setTimeout(() => {
-      setGuardando(false);
-      navigate("/clientes");
-    }, 600);
-  };
+    navigate("/clientes");
+  } catch (error) {
+    console.error("Error creando cliente:", error);
+  } finally {
+    setGuardando(false);
+  }
+};
 
   return (
     <Box sx={{ pb: 10 }}>
