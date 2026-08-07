@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -11,79 +11,64 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ClienteCard from "./components/ClienteCard";
 import ConfirmDialog from "../../components/ConfirmDialog";
-
-interface Cliente {
-  id: number;
-  nombre: string;
-  telefono: string;
-  saldoPendiente: number;
-}
-
-const clientesSimulados: Cliente[] = [
-  {
-    id: 1,
-    nombre: "Juan Pérez",
-    telefono: "223 555-1234",
-    saldoPendiente: 45000,
-  },
-  {
-    id: 2,
-    nombre: "María Gómez",
-    telefono: "223 444-5678",
-    saldoPendiente: 0,
-  },
-  {
-    id: 3,
-    nombre: "Carlos Fernández",
-    telefono: "223 333-9012",
-    saldoPendiente: 28500,
-  },
-];
+import { obtenerClientes, type Cliente } from "../../services/clienteService";
 
 function ClientesPage() {
   const navigate = useNavigate();
 
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [busqueda, setBusqueda] = useState("");
+
+  useEffect(() => {
+    const cargarClientes = async () => {
+      try {
+        const data = await obtenerClientes();
+        setClientes(data);
+      } catch (error) {
+        console.error("Error al obtener clientes:", error);
+      }
+    };
+
+    cargarClientes();
+  }, []);
 
   const clientesFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
     if (!texto) {
-      return clientesSimulados;
+      return clientes;
     }
 
-    return clientesSimulados.filter(
+    return clientes.filter(
       (cliente) =>
         cliente.nombre.toLowerCase().includes(texto) ||
         cliente.telefono.toLowerCase().includes(texto)
     );
-  }, [busqueda]);
+  }, [busqueda, clientes]);
 
   const [clienteAEliminar, setClienteAEliminar] = useState<{
-  id: number;
-  nombre: string;
+    id: number;
+    nombre: string;
   } | null>(null);
 
   const [eliminando, setEliminando] = useState(false);
 
   const handleEliminarCliente = () => {
-  if (!clienteAEliminar) {
-    return;
-  }
+    if (!clienteAEliminar) return;
 
-  setEliminando(true);
+    setEliminando(true);
 
-  // Más adelante se reemplaza por el DELETE a la API.
-  console.log("Cliente eliminado:", clienteAEliminar.id);
+    // Más adelante se reemplaza por el DELETE a la API.
+    console.log("Cliente eliminado:", clienteAEliminar.id);
 
-  setTimeout(() => {
-    setEliminando(false);
-    setClienteAEliminar(null);
-  }, 600);
+    setTimeout(() => {
+      setEliminando(false);
+      setClienteAEliminar(null);
+    }, 600);
   };
 
   return (
-    <Box>
+    <Box sx={{ mb: 2 }}>
       <Box sx={{ mb: 2 }}>
         <Typography
           component="h1"
@@ -162,11 +147,11 @@ function ClientesPage() {
               navigate(`/clientes/${cliente.id}/editar`);
             }}
             onEliminar={() => {
-            setClienteAEliminar({
-              id: cliente.id,
-              nombre: cliente.nombre,
-            });
-          }}
+              setClienteAEliminar({
+                id: cliente.id,
+                nombre: cliente.nombre,
+              });
+            }}
           />
         ))}
       </Box>
@@ -211,6 +196,7 @@ function ClientesPage() {
       >
         <AddRoundedIcon />
       </Fab>
+
       <ConfirmDialog
         open={Boolean(clienteAEliminar)}
         title="Eliminar cliente"
