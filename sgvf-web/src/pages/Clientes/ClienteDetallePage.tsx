@@ -23,9 +23,9 @@ import MovimientoClienteDialog from "./components/MovimientoClienteDialog";
 
 import {
   obtenerClientePorId,
+  registrarPagoCliente,
   type Cliente,
 } from "../../services/clienteService";
-
 
 interface MovimientoCliente {
   id: number;
@@ -35,7 +35,6 @@ interface MovimientoCliente {
   monto: number;
   descripcion: string;
 }
-
 
 const movimientosSimulados: MovimientoCliente[] = [
   {
@@ -56,101 +55,99 @@ const movimientosSimulados: MovimientoCliente[] = [
   },
 ];
 
-
 function ClienteDetallePage() {
-
   const { id } = useParams();
 
+  const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [cargando, setCargando] = useState(true);
 
-  const [cliente, setCliente] =
-    useState<Cliente | null>(null);
+  const [dialogoMovimiento, setDialogoMovimiento] = useState<
+    "deuda" | "cobro" | null
+  >(null);
 
-  const [cargando, setCargando] =
-    useState(true);
-
-
-  const [dialogoMovimiento, setDialogoMovimiento] =
-    useState<"deuda" | "cobro" | null>(null);
-
-
-  const [guardandoMovimiento, setGuardandoMovimiento] =
-    useState(false);
-
-
+  const [guardandoMovimiento, setGuardandoMovimiento] = useState(false);
 
   useEffect(() => {
-
     const cargarCliente = async () => {
-
       try {
-
         if (!id) return;
 
-        const data =
-          await obtenerClientePorId(Number(id));
+        const data = await obtenerClientePorId(Number(id));
 
         setCliente(data);
-
       } catch (error) {
-
-        console.error(
-          "Error obteniendo cliente:",
-          error
-        );
-
+        console.error("Error obteniendo cliente:", error);
       } finally {
-
         setCargando(false);
-
       }
-
     };
 
-
     cargarCliente();
-
   }, [id]);
 
-
-
-  const handleGuardarMovimiento = (data: {
+  const handleGuardarMovimiento = async (data: {
     monto: number;
     fecha: string;
     observaciones: string;
   }) => {
-
-
     if (!cliente || !dialogoMovimiento) {
       return;
     }
 
-
     setGuardandoMovimiento(true);
 
+    try {
+      // ==========================================
+      // COBRO
+      // ==========================================
 
-    console.log(
-      "Movimiento:",
-      {
-        clienteId: cliente.id,
-        tipo: dialogoMovimiento,
-        ...data,
+      if (dialogoMovimiento === "cobro") {
+        await registrarPagoCliente({
+          clienteId: cliente.id,
+          monto: data.monto,
+          observaciones: data.observaciones,
+        });
+
+        // Volvemos a consultar el cliente para obtener
+        // el saldo actualizado desde el backend.
+        const clienteActualizado = await obtenerClientePorId(
+          cliente.id
+        );
+
+        setCliente(clienteActualizado);
+
+        setDialogoMovimiento(null);
       }
-    );
 
+      // ==========================================
+      // DEUDA
+      // ==========================================
 
-    setTimeout(() => {
+      if (dialogoMovimiento === "deuda") {
+        // Todavía no hacemos nada con deuda.
+        // En el próximo paso vamos a utilizar
+        // el endpoint de Venta que ya existe.
 
+        console.log("Deuda pendiente de implementar:", {
+          clienteId: cliente.id,
+          monto: data.monto,
+          fecha: data.fecha,
+          observaciones: data.observaciones,
+        });
+
+        setDialogoMovimiento(null);
+      }
+    } catch (error) {
+      console.error(
+        "Error al registrar movimiento:",
+        error
+      );
+    } finally {
       setGuardandoMovimiento(false);
-      setDialogoMovimiento(null);
-
-    }, 600);
-
+    }
   };
 
-
-
   if (cargando) {
-
     return (
       <Box
         sx={{
@@ -163,13 +160,9 @@ function ClienteDetallePage() {
         </Typography>
       </Box>
     );
-
   }
 
-
-
   if (!cliente) {
-
     return (
       <Box
         sx={{
@@ -186,29 +179,20 @@ function ClienteDetallePage() {
         </Typography>
       </Box>
     );
-
   }
 
+  const movimientosCliente = movimientosSimulados.filter(
+    (movimiento) =>
+      movimiento.clienteId === cliente.id
+  );
 
-
-  const movimientosCliente =
-    movimientosSimulados.filter(
-      (movimiento) =>
-        movimiento.clienteId === cliente.id
-    );
-
-
-
-  const iniciales =
-    cliente.nombre
-      .split(" ")
-      .filter(Boolean)
-      .map((palabra) => palabra[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-
-
+  const iniciales = cliente.nombre
+    .split(" ")
+    .filter(Boolean)
+    .map((palabra) => palabra[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const saldoFormateado =
     cliente.saldoPendiente.toLocaleString(
@@ -220,17 +204,13 @@ function ClienteDetallePage() {
       }
     );
 
-
-
   const tieneDeuda =
     cliente.saldoPendiente > 0;
 
-
-
   return (
-
     <Box sx={{ pb: 10 }}>
 
+      {/* ENCABEZADO */}
 
       <Box
         sx={{
@@ -240,7 +220,6 @@ function ClienteDetallePage() {
           mb: 2,
         }}
       >
-
         <Button
           onClick={() => window.history.back()}
           sx={{
@@ -249,17 +228,13 @@ function ClienteDetallePage() {
             height: 40,
             p: 0,
             borderRadius: "10px",
-            border:
-              "1px solid #DDDDDD",
-            backgroundColor:
-              "#FFFFFF",
-            color:
-              "#333333",
+            border: "1px solid #DDDDDD",
+            backgroundColor: "#FFFFFF",
+            color: "#333333",
           }}
         >
           <ArrowBackRounded />
         </Button>
-
 
         <Typography
           component="h1"
@@ -270,23 +245,18 @@ function ClienteDetallePage() {
         >
           Detalle del cliente
         </Typography>
-
-
       </Box>
 
-
+      {/* INFORMACIÓN DEL CLIENTE */}
 
       <Card
         elevation={0}
         sx={{
           borderRadius: "16px",
-          border:
-            "1px solid #DDDDDD",
+          border: "1px solid #DDDDDD",
         }}
       >
-
         <CardContent>
-
 
           <Box
             sx={{
@@ -295,25 +265,19 @@ function ClienteDetallePage() {
               gap: 1.5,
             }}
           >
-
-
             <Avatar
               sx={{
                 width: 48,
                 height: 48,
-                backgroundColor:
-                  "#E8F5E9",
-                color:
-                  "#2E7D32",
+                backgroundColor: "#E8F5E9",
+                color: "#2E7D32",
                 fontWeight: 700,
               }}
             >
               {iniciales}
             </Avatar>
 
-
             <Box>
-
               <Typography
                 sx={{
                   fontWeight: 700,
@@ -322,7 +286,6 @@ function ClienteDetallePage() {
                 {cliente.nombre}
               </Typography>
 
-
               <Box
                 sx={{
                   display: "flex",
@@ -330,64 +293,43 @@ function ClienteDetallePage() {
                   gap: 0.5,
                 }}
               >
-
                 <PhoneOutlined
                   sx={{
                     fontSize: 16,
-                    color:
-                      "text.secondary",
+                    color: "text.secondary",
                   }}
                 />
 
-
                 <Typography
                   sx={{
-                    fontSize:
-                      ".85rem",
-                    color:
-                      "text.secondary",
+                    fontSize: ".85rem",
+                    color: "text.secondary",
                   }}
                 >
                   {cliente.telefono}
                 </Typography>
-
-
               </Box>
-
-
             </Box>
-
-
           </Box>
 
-
-
-          <Divider sx={{ my: 2 }}/>
-
-
+          <Divider sx={{ my: 2 }} />
 
           <Typography
             sx={{
-              fontSize:
-                ".8rem",
-              color:
-                "text.secondary",
+              fontSize: ".8rem",
+              color: "text.secondary",
             }}
           >
             Deuda del cliente
           </Typography>
 
-
           <Typography
             sx={{
-              fontSize:
-                "1.6rem",
-              fontWeight:
-                800,
-              color:
-                tieneDeuda
-                  ? "#D32F2F"
-                  : "#2E7D32",
+              fontSize: "1.6rem",
+              fontWeight: 800,
+              color: tieneDeuda
+                ? "#D32F2F"
+                : "#2E7D32",
             }}
           >
             {tieneDeuda
@@ -395,27 +337,24 @@ function ClienteDetallePage() {
               : "Sin deuda"}
           </Typography>
 
-
         </CardContent>
-
-
       </Card>
 
-
+      {/* ACCIONES */}
 
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns:
-            "1fr 1fr",
+          gridTemplateColumns: "1fr 1fr",
           gap: 1.25,
           mt: 1.5,
         }}
       >
-
         <Button
           variant="outlined"
-          startIcon={<ReceiptLongOutlined />}
+          startIcon={
+            <ReceiptLongOutlined />
+          }
           onClick={() =>
             setDialogoMovimiento("deuda")
           }
@@ -423,24 +362,22 @@ function ClienteDetallePage() {
           Registrar deuda
         </Button>
 
-
         <Button
           variant="outlined"
-          startIcon={<PaymentsOutlined />}
+          startIcon={
+            <PaymentsOutlined />
+          }
           onClick={() =>
             setDialogoMovimiento("cobro")
           }
         >
           Registrar cobro
         </Button>
-
-
       </Box>
 
-
+      {/* MOVIMIENTOS */}
 
       <Box sx={{ mt: 2 }}>
-
 
         <Typography
           sx={{
@@ -450,21 +387,16 @@ function ClienteDetallePage() {
           Movimientos recientes
         </Typography>
 
-
-
         <Box
           sx={{
             display: "flex",
-            flexDirection:
-              "column",
+            flexDirection: "column",
             gap: 1,
             mt: 1,
           }}
         >
-
           {movimientosCliente.map(
             (movimiento) => (
-
               <MovimientoClienteCard
                 key={movimiento.id}
                 tipo={movimiento.tipo}
@@ -474,17 +406,13 @@ function ClienteDetallePage() {
                   movimiento.descripcion
                 }
               />
-
             )
           )}
-
-
         </Box>
-
 
       </Box>
 
-
+      {/* DIALOG */}
 
       <MovimientoClienteDialog
         open={
@@ -497,23 +425,17 @@ function ClienteDetallePage() {
           guardandoMovimiento
         }
         onClose={() => {
-
           if (!guardandoMovimiento) {
             setDialogoMovimiento(null);
           }
-
         }}
         onSubmit={
           handleGuardarMovimiento
         }
       />
 
-
     </Box>
-
   );
-
 }
-
 
 export default ClienteDetallePage;
