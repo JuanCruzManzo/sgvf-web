@@ -16,49 +16,30 @@ import {
 } from "@mui/material";
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import MovimientoClienteCard from "./components/MovimientoClienteCard";
 import MovimientoClienteDialog from "./components/MovimientoClienteDialog";
 
 import {
   obtenerClientePorId,
-  registrarPagoCliente,
   type Cliente,
 } from "../../services/clienteService";
 
-interface MovimientoCliente {
-  id: number;
-  clienteId: number;
-  tipo: "deuda" | "cobro";
-  fecha: string;
-  monto: number;
-  descripcion: string;
-}
-
-const movimientosSimulados: MovimientoCliente[] = [
-  {
-    id: 1,
-    clienteId: 1,
-    tipo: "deuda",
-    fecha: "29/07/2026",
-    monto: 60000,
-    descripcion: "Venta fiada",
-  },
-  {
-    id: 2,
-    clienteId: 1,
-    tipo: "cobro",
-    fecha: "28/07/2026",
-    monto: 15000,
-    descripcion: "Cobro en efectivo",
-  },
-];
+import {
+  obtenerPagosPorCliente,
+  registrarCobro,
+  registrarDeuda,
+  type PagoCliente,
+} from "../../services/pagoClienteService";
 
 function ClienteDetallePage() {
+  const navigate = useNavigate();
   const { id } = useParams();
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [movimientos, setMovimientos] = useState<PagoCliente[]>([]);
+
   const [cargando, setCargando] = useState(true);
 
   const [dialogoMovimiento, setDialogoMovimiento] = useState<
@@ -67,23 +48,40 @@ function ClienteDetallePage() {
 
   const [guardandoMovimiento, setGuardandoMovimiento] = useState(false);
 
+  // =========================
+  // Cargar cliente y movimientos
+  // =========================
+
+  const cargarDatos = async () => {
+    if (!id) return;
+
+    try {
+      const clienteId = Number(id);
+
+      const [clienteData, movimientosData] = await Promise.all([
+        obtenerClientePorId(clienteId),
+        obtenerPagosPorCliente(clienteId),
+      ]);
+
+      setCliente(clienteData);
+      setMovimientos(movimientosData);
+    } catch (error) {
+      console.error(
+        "Error obteniendo datos del cliente:",
+        error
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
-    const cargarCliente = async () => {
-      try {
-        if (!id) return;
-
-        const data = await obtenerClientePorId(Number(id));
-
-        setCliente(data);
-      } catch (error) {
-        console.error("Error obteniendo cliente:", error);
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargarCliente();
+    cargarDatos();
   }, [id]);
+
+  // =========================
+  // Registrar deuda / cobro
+  // =========================
 
   const handleGuardarMovimiento = async (data: {
     monto: number;
@@ -94,58 +92,46 @@ function ClienteDetallePage() {
       return;
     }
 
-    setGuardandoMovimiento(true);
-
     try {
-      // ==========================================
-      // COBRO
-      // ==========================================
+      setGuardandoMovimiento(true);
 
-      if (dialogoMovimiento === "cobro") {
-        await registrarPagoCliente({
-          clienteId: cliente.id,
-          monto: data.monto,
-          observaciones: data.observaciones,
-        });
-
-        // Volvemos a consultar el cliente para obtener
-        // el saldo actualizado desde el backend.
-        const clienteActualizado = await obtenerClientePorId(
-          cliente.id
-        );
-
-        setCliente(clienteActualizado);
-
-        setDialogoMovimiento(null);
-      }
-
-      // ==========================================
-      // DEUDA
-      // ==========================================
+      const datos = {
+        clienteId: cliente.id,
+        monto: data.monto,
+        observaciones: data.observaciones || undefined,
+      };
 
       if (dialogoMovimiento === "deuda") {
-        // Todavía no hacemos nada con deuda.
-        // En el próximo paso vamos a utilizar
-        // el endpoint de Venta que ya existe.
-
-        console.log("Deuda pendiente de implementar:", {
-          clienteId: cliente.id,
-          monto: data.monto,
-          fecha: data.fecha,
-          observaciones: data.observaciones,
-        });
-
-        setDialogoMovimiento(null);
+        await registrarDeuda(datos);
+      } else {
+        await registrarCobro(datos);
       }
-    } catch (error) {
+
+      // Volvemos a consultar el cliente.
+      // Esto actualiza el saldo real desde el backend.
+      await cargarDatos();
+
+      // Cerramos el diálogo.
+      setDialogoMovimiento(null);
+    } catch (error: any) {
       console.error(
-        "Error al registrar movimiento:",
+        "Error registrando movimiento:",
         error
       );
+
+      const mensaje =
+        error?.response?.data?.mensaje ||
+        "No se pudo registrar el movimiento.";
+
+      alert(mensaje);
     } finally {
       setGuardandoMovimiento(false);
     }
   };
+
+  // =========================
+  // Estados de carga
+  // =========================
 
   if (cargando) {
     return (
@@ -181,10 +167,9 @@ function ClienteDetallePage() {
     );
   }
 
-  const movimientosCliente = movimientosSimulados.filter(
-    (movimiento) =>
-      movimiento.clienteId === cliente.id
-  );
+  // =========================
+  // Datos visuales
+  // =========================
 
   const iniciales = cliente.nombre
     .split(" ")
@@ -207,6 +192,10 @@ function ClienteDetallePage() {
   const tieneDeuda =
     cliente.saldoPendiente > 0;
 
+  // =========================
+  // Render
+  // =========================
+
   return (
     <Box sx={{ pb: 10 }}>
 
@@ -221,7 +210,7 @@ function ClienteDetallePage() {
         }}
       >
         <Button
-          onClick={() => window.history.back()}
+          onClick={() => navigate("/clientes")}
           sx={{
             minWidth: 40,
             width: 40,
@@ -241,6 +230,7 @@ function ClienteDetallePage() {
           sx={{
             fontSize: "1.35rem",
             fontWeight: 700,
+            color: "#333333",
           }}
         >
           Detalle del cliente
@@ -254,10 +244,18 @@ function ClienteDetallePage() {
         sx={{
           borderRadius: "16px",
           border: "1px solid #DDDDDD",
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
         }}
       >
-        <CardContent>
-
+        <CardContent
+          sx={{
+            p: 2,
+            "&:last-child": {
+              pb: 2,
+            },
+          }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -281,6 +279,7 @@ function ClienteDetallePage() {
               <Typography
                 sx={{
                   fontWeight: 700,
+                  color: "#333333",
                 }}
               >
                 {cliente.nombre}
@@ -302,7 +301,7 @@ function ClienteDetallePage() {
 
                 <Typography
                   sx={{
-                    fontSize: ".85rem",
+                    fontSize: "0.85rem",
                     color: "text.secondary",
                   }}
                 >
@@ -316,7 +315,7 @@ function ClienteDetallePage() {
 
           <Typography
             sx={{
-              fontSize: ".8rem",
+              fontSize: "0.8rem",
               color: "text.secondary",
             }}
           >
@@ -325,6 +324,7 @@ function ClienteDetallePage() {
 
           <Typography
             sx={{
+              mt: 0.2,
               fontSize: "1.6rem",
               fontWeight: 800,
               color: tieneDeuda
@@ -336,7 +336,6 @@ function ClienteDetallePage() {
               ? saldoFormateado
               : "Sin deuda"}
           </Typography>
-
         </CardContent>
       </Card>
 
@@ -358,6 +357,19 @@ function ClienteDetallePage() {
           onClick={() =>
             setDialogoMovimiento("deuda")
           }
+          sx={{
+            minHeight: 46,
+            borderRadius: "12px",
+            borderColor: "#EF9A9A",
+            color: "#D32F2F",
+            fontWeight: 700,
+            textTransform: "none",
+            backgroundColor: "#FFF8F8",
+            "&:hover": {
+              borderColor: "#E57373",
+              backgroundColor: "#FFEBEE",
+            },
+          }}
         >
           Registrar deuda
         </Button>
@@ -370,49 +382,112 @@ function ClienteDetallePage() {
           onClick={() =>
             setDialogoMovimiento("cobro")
           }
+          sx={{
+            minHeight: 46,
+            borderRadius: "12px",
+            borderColor: "#81C784",
+            color: "#2E7D32",
+            fontWeight: 700,
+            textTransform: "none",
+            backgroundColor: "#F6FBF6",
+            "&:hover": {
+              borderColor: "#66BB6A",
+              backgroundColor: "#E8F5E9",
+            },
+          }}
         >
           Registrar cobro
         </Button>
       </Box>
 
-      {/* MOVIMIENTOS */}
+      {/* HISTORIAL */}
 
-      <Box sx={{ mt: 2 }}>
+      <Box sx={{ mt: 2.25 }}>
 
         <Typography
           sx={{
+            fontSize: "1rem",
             fontWeight: 700,
+            color: "#333333",
           }}
         >
           Movimientos recientes
         </Typography>
 
-        <Box
+        <Typography
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            mt: 1,
+            mt: 0.2,
+            mb: 1.25,
+            fontSize: "0.8rem",
+            color: "text.secondary",
           }}
         >
-          {movimientosCliente.map(
-            (movimiento) => (
+          Historial de movimientos del cliente.
+        </Typography>
+
+        {movimientos.length > 0 ? (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            {movimientos.map((movimiento) => (
               <MovimientoClienteCard
                 key={movimiento.id}
-                tipo={movimiento.tipo}
+                tipo="cobro"
                 fecha={movimiento.fecha}
                 monto={movimiento.monto}
                 descripcion={
-                  movimiento.descripcion
+                  movimiento.observaciones ||
+                  "Movimiento de cuenta"
                 }
               />
-            )
-          )}
-        </Box>
+            ))}
+          </Box>
+        ) : (
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: "14px",
+              border: "1px solid #DDDDDD",
+              backgroundColor: "#FFFFFF",
+            }}
+          >
+            <CardContent
+              sx={{
+                py: 3,
+                textAlign: "center",
+                "&:last-child": {
+                  pb: 3,
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                }}
+              >
+                No hay movimientos registrados
+              </Typography>
 
+              <Typography
+                sx={{
+                  mt: 0.35,
+                  fontSize: "0.78rem",
+                  color: "text.secondary",
+                }}
+              >
+                Las deudas y los cobros aparecerán acá.
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
       </Box>
 
-      {/* DIALOG */}
+      {/* DIÁLOGO */}
 
       <MovimientoClienteDialog
         open={
