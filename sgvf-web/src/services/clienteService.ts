@@ -20,12 +20,16 @@ export interface ClienteUpdateDto {
   telefono: string;
 }
 
+export interface PagoClienteCreateDto {
+  clienteId: number;
+  monto: number;
+  observaciones?: string;
+}
 
 export const obtenerClientes = async (): Promise<Cliente[]> => {
   const response = await api.get("/Cliente");
   return response.data;
 };
-
 
 export const obtenerClientePorId = async (
   id: number
@@ -34,14 +38,12 @@ export const obtenerClientePorId = async (
   return response.data;
 };
 
-
 export const crearCliente = async (
   cliente: ClienteCreateDto
 ): Promise<Cliente> => {
   const response = await api.post("/Cliente", cliente);
   return response.data;
 };
-
 
 export const actualizarCliente = async (
   id: number,
@@ -50,9 +52,14 @@ export const actualizarCliente = async (
   await api.put(`/Cliente/${id}`, cliente);
 };
 
-
 export const eliminarCliente = async (
   id: number
 ): Promise<void> => {
   await api.delete(`/Cliente/${id}`);
+};
+
+export const registrarPagoCliente = async (
+  pago: PagoClienteCreateDto
+): Promise<void> => {
+  await api.post("/PagoCliente", pago);
 };
