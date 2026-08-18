@@ -55,27 +55,35 @@ function ProductoForm({
     const stockMinimoNumerico = Number(stockMinimo);
 
     const nuevosErrores = {
-      nombre: nombre.trim()
-        ? ""
-        : "Ingresá el nombre del producto.",
+      nombre:
+        !nombre.trim()
+          ? "Ingresá el nombre del producto."
+          : nombre.trim().length > 100
+            ? "El nombre no puede superar los 100 caracteres."
+            : "",
 
-      descripcion: descripcion.trim()
-        ? ""
-        : "Ingresá una descripción.",
+      descripcion:
+        descripcion.trim().length > 250
+          ? "La descripción no puede superar los 250 caracteres."
+          : "",
 
       stock:
-        stock === "" ||
-        !Number.isInteger(stockNumerico) ||
-        stockNumerico < 0
-          ? "Ingresá un stock válido, igual o mayor que cero."
-          : "",
+        stock === ""
+          ? "Ingresá el stock actual."
+          : !Number.isInteger(stockNumerico)
+            ? "El stock debe ser un número entero."
+            : stockNumerico < 0
+              ? "El stock no puede ser negativo."
+              : "",
 
       stockMinimo:
-        stockMinimo === "" ||
-        !Number.isInteger(stockMinimoNumerico) ||
-        stockMinimoNumerico < 0
-          ? "Ingresá un stock mínimo válido."
-          : "",
+        stockMinimo === ""
+          ? "Ingresá el stock mínimo."
+          : !Number.isInteger(stockMinimoNumerico)
+            ? "El stock mínimo debe ser un número entero."
+            : stockMinimoNumerico < 0
+              ? "El stock mínimo no puede ser negativo."
+              : "",
     };
 
     setErrores(nuevosErrores);

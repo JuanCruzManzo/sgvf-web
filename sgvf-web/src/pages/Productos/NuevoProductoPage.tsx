@@ -2,6 +2,7 @@ import {
   ArrowBackRounded,
   Inventory2Outlined,
 } from "@mui/icons-material";
+
 import {
   Avatar,
   Box,
@@ -10,9 +11,12 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import ProductoForm from "./components/ProductoForm";
+import { crearProducto } from "../../services/productoService";
 
 interface ProductoFormValues {
   nombre: string;
@@ -25,16 +29,26 @@ function NuevoProductoPage() {
   const navigate = useNavigate();
   const [guardando, setGuardando] = useState(false);
 
-  const handleGuardar = (values: ProductoFormValues) => {
-    setGuardando(true);
+  const handleGuardar = async (values: ProductoFormValues) => {
+    try {
+      setGuardando(true);
 
-    // Más adelante se reemplaza por el POST a la API.
-    console.log("Nuevo producto:", values);
+      await crearProducto({
+        nombre: values.nombre,
+        descripcion: values.descripcion,
+        stock: values.stock,
+        stockMinimo: values.stockMinimo,
+      });
 
-    setTimeout(() => {
-      setGuardando(false);
       navigate("/productos");
-    }, 600);
+    } catch (error) {
+      console.error("Error al crear producto:", error);
+
+      // Más adelante lo reemplazamos por Snackbar.
+      alert("No se pudo crear el producto.");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (

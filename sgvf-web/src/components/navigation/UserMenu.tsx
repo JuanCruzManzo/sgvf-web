@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  AccountCircleOutlined,
   LogoutRounded,
 } from "@mui/icons-material";
 
@@ -169,27 +168,6 @@ function UserMenu({
             </Typography>
           </Box>
         </Box>
-
-        <Divider />
-
-        {/* Acciones futuras */}
-        <MenuItem
-            disabled
-            sx={{
-                minHeight: 46,
-                mx: 1,
-                mt: 0.75,
-                borderRadius: "10px",
-                fontSize: "0.88rem",
-            }}
-            >
-            <ListItemIcon>
-                <AccountCircleOutlined fontSize="small" />
-            </ListItemIcon>
-
-            Mi perfil
-        </MenuItem>
-
         <Divider sx={{ my: 0.75 }} />
 
         {/* Cierre de sesión */}

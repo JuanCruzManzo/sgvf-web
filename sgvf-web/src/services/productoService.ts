@@ -9,14 +9,14 @@ export interface Producto {
   activo: boolean;
 }
 
-export interface ProductoCreateDto {
+export interface ProductoCreate {
   nombre: string;
   descripcion: string;
   stock: number;
   stockMinimo: number;
 }
 
-export interface ProductoUpdateDto {
+export interface ProductoUpdate {
   nombre: string;
   descripcion: string;
   stock: number;
@@ -25,7 +25,7 @@ export interface ProductoUpdateDto {
 }
 
 export const obtenerProductos = async (): Promise<Producto[]> => {
-  const response = await api.get("/Producto");
+  const response = await api.get<Producto[]>("/Producto");
 
   return response.data;
 };
@@ -33,22 +33,25 @@ export const obtenerProductos = async (): Promise<Producto[]> => {
 export const obtenerProductoPorId = async (
   id: number
 ): Promise<Producto> => {
-  const response = await api.get(`/Producto/${id}`);
+  const response = await api.get<Producto>(`/Producto/${id}`);
 
   return response.data;
 };
 
 export const crearProducto = async (
-  producto: ProductoCreateDto
+  producto: ProductoCreate
 ): Promise<Producto> => {
-  const response = await api.post("/Producto", producto);
+  const response = await api.post<Producto>(
+    "/Producto",
+    producto
+  );
 
   return response.data;
 };
 
 export const actualizarProducto = async (
   id: number,
-  producto: ProductoUpdateDto
+  producto: ProductoUpdate
 ): Promise<void> => {
   await api.put(`/Producto/${id}`, producto);
 };
