@@ -32,13 +32,13 @@ export interface DetalleVentaCreateDto {
 
 export interface VentaCreateDto {
   clienteId?: number | null;
-  usuarioId: number;
   estadoPago: EstadoPago;
   detalles: DetalleVentaCreateDto[];
 }
 
 export const obtenerVentas = async (): Promise<Venta[]> => {
   const response = await api.get("/Venta");
+
   return response.data;
 };
 
@@ -46,6 +46,7 @@ export const obtenerVentaPorId = async (
   id: number
 ): Promise<Venta> => {
   const response = await api.get(`/Venta/${id}`);
+
   return response.data;
 };
 
@@ -53,6 +54,7 @@ export const crearVenta = async (
   venta: VentaCreateDto
 ): Promise<Venta> => {
   const response = await api.post("/Venta", venta);
+
   return response.data;
 };
 
@@ -60,4 +62,34 @@ export const cancelarVenta = async (
   id: number
 ): Promise<void> => {
   await api.delete(`/Venta/${id}`);
+};
+
+export const descargarTicketVenta = async (
+  id: number
+): Promise<void> => {
+  const response = await api.get(
+    `/Venta/${id}/ticket`,
+    {
+      responseType: "blob",
+    }
+  );
+
+  const url = window.URL.createObjectURL(
+    new Blob([response.data], {
+      type: "application/pdf",
+    })
+  );
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `Ticket-Venta-${id}.pdf`;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
 };
