@@ -23,23 +23,32 @@ import {
   Typography,
 } from "@mui/material";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { useNavigate } from "react-router-dom";
 
 import AgregarProductoVentaDialog from "./components/AgregarProductoVentaDialog";
 import VentaProductoCard from "./components/VentaProductoCard";
 import VentaRegistradaDialog from "./components/VentaRegistradaDialog";
 
-interface ClienteDisponible {
-  id: number;
-  nombre: string;
-}
+import {
+  obtenerClientes,
+  type Cliente,
+} from "../../services/clienteService";
 
-interface ProductoDisponible {
-  id: number;
-  nombre: string;
-  stock: number;
-}
+import {
+  obtenerProductos,
+  type Producto,
+} from "../../services/productoService";
+
+import {
+  crearVenta,
+  type EstadoPago,
+} from "../../services/ventaService";
 
 interface ProductoAgregado {
   productoId: number;
@@ -48,75 +57,125 @@ interface ProductoAgregado {
   precioUnitario: number;
 }
 
-type EstadoPago = "Pagado" | "Pendiente";
-
 const CONSUMIDOR_FINAL = "consumidor-final";
-
-const clientesSimulados: ClienteDisponible[] = [
-  {
-    id: 1,
-    nombre: "Juan Pérez",
-  },
-  {
-    id: 2,
-    nombre: "María Gómez",
-  },
-  {
-    id: 3,
-    nombre: "Carlos Fernández",
-  },
-];
-
-const productosDisponibles: ProductoDisponible[] = [
-  {
-    id: 1,
-    nombre: "Tomate redondo",
-    stock: 28,
-  },
-  {
-    id: 2,
-    nombre: "Papa",
-    stock: 15,
-  },
-  {
-    id: 3,
-    nombre: "Lechuga de manteca",
-    stock: 4,
-  },
-  {
-    id: 4,
-    nombre: "Morrón colorado",
-    stock: 0,
-  },
-  {
-    id: 5,
-    nombre: "Zapallito redondo",
-    stock: 12,
-  },
-];
 
 function NuevaVentaPage() {
   const navigate = useNavigate();
 
-  const [clienteId, setClienteId] = useState(CONSUMIDOR_FINAL);
+  // =========================
+  // Datos del backend
+  // =========================
+
+  const [clientes, setClientes] =
+    useState<Cliente[]>([]);
+
+  const [productos, setProductos] =
+    useState<Producto[]>([]);
+
+  const [cargandoDatos, setCargandoDatos] =
+    useState(true);
+
+  // =========================
+  // Datos de la venta
+  // =========================
+
+  const [clienteId, setClienteId] =
+    useState(CONSUMIDOR_FINAL);
+
   const [estadoPago, setEstadoPago] =
     useState<EstadoPago>("Pagado");
 
-  const [productosAgregados, setProductosAgregados] = useState<
-    ProductoAgregado[]
-  >([]);
+  const [
+    productosAgregados,
+    setProductosAgregados,
+  ] = useState<ProductoAgregado[]>([]);
 
-  const [dialogoProductoAbierto, setDialogoProductoAbierto] =
-    useState(false);
+  // =========================
+  // Dialog producto
+  // =========================
 
-  const [productoEnEdicion, setProductoEnEdicion] =
-    useState<ProductoAgregado | null>(null);
+  const [
+    dialogoProductoAbierto,
+    setDialogoProductoAbierto,
+  ] = useState(false);
 
-  const [guardandoProducto, setGuardandoProducto] =
-    useState(false);
+  const [
+    productoEnEdicion,
+    setProductoEnEdicion,
+  ] = useState<ProductoAgregado | null>(null);
 
-  const [confirmandoVenta, setConfirmandoVenta] =
-    useState(false);
+  const [
+    guardandoProducto,
+    setGuardandoProducto,
+  ] = useState(false);
+
+  // =========================
+  // Registro venta
+  // =========================
+
+  const [
+    confirmandoVenta,
+    setConfirmandoVenta,
+  ] = useState(false);
+
+  const [
+    dialogoVentaRegistrada,
+    setDialogoVentaRegistrada,
+  ] = useState(false);
+
+  const [
+    ventaRegistradaId,
+    setVentaRegistradaId,
+  ] = useState<number | null>(null);
+
+  // =========================
+  // Cargar clientes y productos
+  // =========================
+
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setCargandoDatos(true);
+
+        const [
+          clientesData,
+          productosData,
+        ] = await Promise.all([
+          obtenerClientes(),
+          obtenerProductos(),
+        ]);
+
+        setClientes(
+          clientesData.filter(
+            (cliente) => cliente.activo
+          )
+        );
+
+        setProductos(
+          productosData.filter(
+            (producto) => producto.activo
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Error cargando datos para la venta:",
+          error
+        );
+
+        alert(
+          "No se pudieron cargar los clientes o productos."
+        );
+      } finally {
+        setCargandoDatos(false);
+      }
+    };
+
+    cargarDatos();
+  }, []);
+
+  // =========================
+  // Total
+  // =========================
 
   const totalVenta = useMemo(() => {
     return productosAgregados.reduce(
@@ -128,19 +187,31 @@ function NuevaVentaPage() {
     );
   }, [productosAgregados]);
 
-  const totalFormateado = totalVenta.toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  });
+  const totalFormateado =
+    totalVenta.toLocaleString(
+      "es-AR",
+      {
+        style: "currency",
+        currency: "ARS",
+        maximumFractionDigits: 0,
+      }
+    );
+
+  // =========================
+  // Abrir / cerrar producto
+  // =========================
 
   const abrirDialogoAgregar = () => {
     setProductoEnEdicion(null);
+
     setDialogoProductoAbierto(true);
   };
 
-  const abrirDialogoEditar = (producto: ProductoAgregado) => {
+  const abrirDialogoEditar = (
+    producto: ProductoAgregado
+  ) => {
     setProductoEnEdicion(producto);
+
     setDialogoProductoAbierto(true);
   };
 
@@ -150,17 +221,24 @@ function NuevaVentaPage() {
     }
 
     setDialogoProductoAbierto(false);
+
     setProductoEnEdicion(null);
   };
+
+  // =========================
+  // Agregar / editar producto
+  // =========================
 
   const handleGuardarProducto = (values: {
     productoId: number;
     cantidadCajones: number;
     precioUnitario: number;
   }) => {
-    const productoDisponible = productosDisponibles.find(
-      (producto) => producto.id === values.productoId
-    );
+    const productoDisponible =
+      productos.find(
+        (producto) =>
+          producto.id === values.productoId
+      );
 
     if (!productoDisponible) {
       return;
@@ -168,120 +246,222 @@ function NuevaVentaPage() {
 
     setGuardandoProducto(true);
 
-    setTimeout(() => {
+    try {
       if (productoEnEdicion) {
-        setProductosAgregados((estadoAnterior) =>
-          estadoAnterior.map((producto) =>
-            producto.productoId ===
-            productoEnEdicion.productoId
-              ? {
-                  ...producto,
-                  cantidadCajones:
-                    values.cantidadCajones,
-                  precioUnitario:
-                    values.precioUnitario,
-                }
-              : producto
-          )
+        setProductosAgregados(
+          (estadoAnterior) =>
+            estadoAnterior.map(
+              (producto) =>
+                producto.productoId ===
+                productoEnEdicion.productoId
+                  ? {
+                      ...producto,
+                      cantidadCajones:
+                        values.cantidadCajones,
+                      precioUnitario:
+                        values.precioUnitario,
+                    }
+                  : producto
+            )
         );
       } else {
         const productoYaAgregado =
           productosAgregados.some(
             (producto) =>
-              producto.productoId === values.productoId
+              producto.productoId ===
+              values.productoId
           );
 
-        if (!productoYaAgregado) {
-          setProductosAgregados((estadoAnterior) => [
+        if (productoYaAgregado) {
+          alert(
+            "El producto ya fue agregado a la venta. Editalo desde la lista."
+          );
+
+          return;
+        }
+
+        setProductosAgregados(
+          (estadoAnterior) => [
             ...estadoAnterior,
             {
-              productoId: values.productoId,
-              nombre: productoDisponible.nombre,
+              productoId:
+                values.productoId,
+
+              nombre:
+                productoDisponible.nombre,
+
               cantidadCajones:
                 values.cantidadCajones,
+
               precioUnitario:
                 values.precioUnitario,
             },
-          ]);
-        }
+          ]
+        );
       }
 
-      setGuardandoProducto(false);
       setDialogoProductoAbierto(false);
       setProductoEnEdicion(null);
-    }, 400);
+    } finally {
+      setGuardandoProducto(false);
+    }
   };
 
-  const handleEliminarProducto = (productoId: number) => {
-    setProductosAgregados((estadoAnterior) =>
-      estadoAnterior.filter(
-        (producto) =>
-          producto.productoId !== productoId
-      )
+  // =========================
+  // Eliminar producto
+  // =========================
+
+  const handleEliminarProducto = (
+    productoId: number
+  ) => {
+    setProductosAgregados(
+      (estadoAnterior) =>
+        estadoAnterior.filter(
+          (producto) =>
+            producto.productoId !==
+            productoId
+        )
     );
   };
 
-  const [dialogoVentaRegistrada, setDialogoVentaRegistrada] =
-  useState(false);
+  // =========================
+  // Confirmar venta REAL
+  // =========================
 
-  const [ventaRegistradaId, setVentaRegistradaId] =
-  useState<number | null>(null);
+  const handleConfirmarVenta =
+    async () => {
+      if (
+        productosAgregados.length === 0
+      ) {
+        return;
+      }
 
-  const handleConfirmarVenta = () => {
-    if (productosAgregados.length === 0) {
-      return;
-    }
-
-    setConfirmandoVenta(true);
-
-    const venta = {
-      clienteId:
+      if (
+        estadoPago === "Pendiente" &&
         clienteId === CONSUMIDOR_FINAL
-        ? null
-        : Number(clienteId),
-      estadoPago,
-      detalles: productosAgregados.map((producto) => ({
-        productoId: producto.productoId,
-        cantidadCajones: producto.cantidadCajones,
-        precioUnitario: producto.precioUnitario,
-      })),
+      ) {
+        alert(
+          "Una venta pendiente debe tener un cliente asociado."
+        );
+
+        return;
+      }
+
+      try {
+        setConfirmandoVenta(true);
+
+        const ventaCreada =
+          await crearVenta({
+            clienteId:
+              clienteId ===
+              CONSUMIDOR_FINAL
+                ? null
+                : Number(clienteId),
+
+            estadoPago,
+
+            detalles:
+              productosAgregados.map(
+                (producto) => ({
+                  productoId:
+                    producto.productoId,
+
+                  cantidadCajones:
+                    producto.cantidadCajones,
+
+                  precioUnitario:
+                    producto.precioUnitario,
+                })
+              ),
+          });
+
+        // ID REAL devuelto por SQL/API
+        setVentaRegistradaId(
+          ventaCreada.id
+        );
+
+        setDialogoVentaRegistrada(
+          true
+        );
+
+        // Actualizamos productos con
+        // el stock nuevo del backend.
+        const productosActualizados =
+          await obtenerProductos();
+
+        setProductos(
+          productosActualizados.filter(
+            (producto) =>
+              producto.activo
+          )
+        );
+      } catch (error: any) {
+        console.error(
+          "Error registrando venta:",
+          error
+        );
+
+        const mensaje =
+          error?.response?.data
+            ?.mensaje ||
+          "No se pudo registrar la venta.";
+
+        alert(mensaje);
+      } finally {
+        setConfirmandoVenta(false);
+      }
     };
 
-    console.log("Venta a registrar:", venta);
+  // =========================
+  // Loading inicial
+  // =========================
 
-      setTimeout(() => {
-      const idSimulado = 26;
-
-      setConfirmandoVenta(false);
-      setVentaRegistradaId(idSimulado);
-      setDialogoVentaRegistrada(true);
-    }, 700);
-      };
+  if (cargandoDatos) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          textAlign: "center",
+        }}
+      >
+        <Typography>
+          Cargando datos...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 12 }}>
-      {/* Encabezado */}
+      {/* ENCABEZADO */}
+
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "40px 1fr 40px",
+          gridTemplateColumns:
+            "40px 1fr 40px",
           alignItems: "center",
           mb: 2,
         }}
       >
         <IconButton
           aria-label="Volver"
-          onClick={() => navigate("/ventas")}
+          onClick={() =>
+            navigate("/ventas")
+          }
           sx={{
             width: 40,
             height: 40,
             borderRadius: "10px",
-            border: "1px solid #DDDDDD",
-            backgroundColor: "#FFFFFF",
+            border:
+              "1px solid #DDDDDD",
+            backgroundColor:
+              "#FFFFFF",
             color: "#333333",
 
             "&:hover": {
-              backgroundColor: "#F5F5F5",
+              backgroundColor:
+                "#F5F5F5",
             },
           }}
         >
@@ -300,23 +480,27 @@ function NuevaVentaPage() {
           Nueva venta
         </Typography>
 
-        {/* Columna vacía para mantener el título centrado */}
         <Box />
       </Box>
 
-      {/* Cliente */}
+      {/* CLIENTE */}
+
       <Card
         elevation={0}
         sx={{
           borderRadius: "16px",
-          border: "1px solid #DDDDDD",
-          backgroundColor: "#FFFFFF",
-          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+          border:
+            "1px solid #DDDDDD",
+          backgroundColor:
+            "#FFFFFF",
+          boxShadow:
+            "0 2px 6px rgba(0, 0, 0, 0.04)",
         }}
       >
         <CardContent
           sx={{
             p: 2,
+
             "&:last-child": {
               pb: 2,
             },
@@ -334,18 +518,25 @@ function NuevaVentaPage() {
               sx={{
                 width: 38,
                 height: 38,
-                backgroundColor: "#E8F5E9",
+                backgroundColor:
+                  "#E8F5E9",
                 color: "#2E7D32",
               }}
             >
-              <PersonOutlineRounded sx={{ fontSize: 22 }} />
+              <PersonOutlineRounded
+                sx={{
+                  fontSize: 22,
+                }}
+              />
             </Avatar>
 
             <Typography
               sx={{
-                fontSize: "0.95rem",
+                fontSize:
+                  "0.95rem",
                 fontWeight: 700,
-                color: "#333333",
+                color:
+                  "#333333",
               }}
             >
               Cliente
@@ -358,12 +549,20 @@ function NuevaVentaPage() {
             label="Seleccionar cliente"
             value={clienteId}
             onChange={(event) => {
-              const nuevoClienteId = event.target.value;
+              const nuevoClienteId =
+                event.target.value;
 
-              setClienteId(nuevoClienteId);
+              setClienteId(
+                nuevoClienteId
+              );
 
-              if (nuevoClienteId === CONSUMIDOR_FINAL) {
-                setEstadoPago("Pagado");
+              if (
+                nuevoClienteId ===
+                CONSUMIDOR_FINAL
+              ) {
+                setEstadoPago(
+                  "Pagado"
+                );
               }
             }}
             slotProps={{
@@ -372,32 +571,53 @@ function NuevaVentaPage() {
               },
             }}
             sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-                backgroundColor: "#FFFFFF",
-              },
+              "& .MuiOutlinedInput-root":
+                {
+                  borderRadius:
+                    "12px",
+
+                  backgroundColor:
+                    "#FFFFFF",
+                },
             }}
           >
-            <MenuItem value={CONSUMIDOR_FINAL}>
+            <MenuItem
+              value={
+                CONSUMIDOR_FINAL
+              }
+            >
               Consumidor final
             </MenuItem>
 
-            {clientesSimulados.map((cliente) => (
-              <MenuItem key={cliente.id} value={cliente.id}>
-                {cliente.nombre}
-              </MenuItem>
-            ))}
+            {clientes.map(
+              (cliente) => (
+                <MenuItem
+                  key={
+                    cliente.id
+                  }
+                  value={
+                    cliente.id
+                  }
+                >
+                  {
+                    cliente.nombre
+                  }
+                </MenuItem>
+              )
+            )}
           </TextField>
         </CardContent>
       </Card>
 
-      {/* Productos */}
+      {/* PRODUCTOS */}
+
       <Box sx={{ mt: 2.25 }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent:
+              "space-between",
             gap: 1,
             mb: 1.25,
           }}
@@ -414,14 +634,16 @@ function NuevaVentaPage() {
 
           <Chip
             label={
-              productosAgregados.length === 1
+              productosAgregados.length ===
+              1
                 ? "1 agregado"
                 : `${productosAgregados.length} agregados`
             }
             size="small"
             sx={{
               minWidth: 34,
-              backgroundColor: "#E8F5E9",
+              backgroundColor:
+                "#E8F5E9",
               color: "#2E7D32",
               fontSize: "0.72rem",
               fontWeight: 700,
@@ -430,35 +652,50 @@ function NuevaVentaPage() {
         </Box>
 
         <Stack spacing={1.25}>
-          {productosAgregados.map((producto) => (
-            <VentaProductoCard
-              key={producto.productoId}
-              nombre={producto.nombre}
-              cantidadCajones={
-                producto.cantidadCajones
-              }
-              precioUnitario={
-                producto.precioUnitario
-              }
-              onEditar={() =>
-                abrirDialogoEditar(producto)
-              }
-              onEliminar={() =>
-                handleEliminarProducto(
+          {productosAgregados.map(
+            (producto) => (
+              <VentaProductoCard
+                key={
                   producto.productoId
-                )
-              }
-            />
-          ))}
+                }
+                nombre={
+                  producto.nombre
+                }
+                cantidadCajones={
+                  producto.cantidadCajones
+                }
+                precioUnitario={
+                  producto.precioUnitario
+                }
+                onEditar={() =>
+                  abrirDialogoEditar(
+                    producto
+                  )
+                }
+                onEliminar={() =>
+                  handleEliminarProducto(
+                    producto.productoId
+                  )
+                }
+              />
+            )
+          )}
         </Stack>
 
         <Button
           fullWidth
           variant="outlined"
           startIcon={<AddRounded />}
-          onClick={abrirDialogoAgregar}
+          onClick={
+            abrirDialogoAgregar
+          }
           sx={{
-            mt: productosAgregados.length > 0 ? 1.5 : 0,
+            mt:
+              productosAgregados.length >
+              0
+                ? 1.5
+                : 0,
+
             minHeight: 48,
             borderRadius: "12px",
             borderStyle: "dashed",
@@ -467,13 +704,21 @@ function NuevaVentaPage() {
             color: "#2E7D32",
             fontWeight: 700,
             textTransform: "none",
-            backgroundColor: "#F8FCF8",
+            backgroundColor:
+              "#F8FCF8",
 
             "&:hover": {
-              borderStyle: "dashed",
-              borderWidth: "1.5px",
-              borderColor: "#4CAF50",
-              backgroundColor: "#E8F5E9",
+              borderStyle:
+                "dashed",
+
+              borderWidth:
+                "1.5px",
+
+              borderColor:
+                "#4CAF50",
+
+              backgroundColor:
+                "#E8F5E9",
             },
           }}
         >
@@ -481,20 +726,29 @@ function NuevaVentaPage() {
         </Button>
       </Box>
 
-      {/* Pago y resumen */}
+      {/* PAGO */}
+
       <Card
         elevation={0}
         sx={{
           mt: 2.25,
+
           borderRadius: "16px",
-          border: "1px solid #DDDDDD",
-          backgroundColor: "#FFFFFF",
-          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+
+          border:
+            "1px solid #DDDDDD",
+
+          backgroundColor:
+            "#FFFFFF",
+
+          boxShadow:
+            "0 2px 6px rgba(0, 0, 0, 0.04)",
         }}
       >
         <CardContent
           sx={{
             p: 2,
+
             "&:last-child": {
               pb: 2,
             },
@@ -512,49 +766,75 @@ function NuevaVentaPage() {
               sx={{
                 width: 38,
                 height: 38,
-                backgroundColor: "#E8F5E9",
-                color: "#2E7D32",
+                backgroundColor:
+                  "#E8F5E9",
+                color:
+                  "#2E7D32",
               }}
             >
-              <PointOfSaleOutlined sx={{ fontSize: 22 }} />
+              <PointOfSaleOutlined
+                sx={{
+                  fontSize: 22,
+                }}
+              />
             </Avatar>
 
             <Typography
               sx={{
-                fontSize: "0.95rem",
+                fontSize:
+                  "0.95rem",
                 fontWeight: 700,
-                color: "#333333",
+                color:
+                  "#333333",
               }}
             >
               Estado del pago
             </Typography>
           </Box>
+
           <ToggleButtonGroup
             exclusive
             fullWidth
             value={estadoPago}
-            onChange={(_, nuevoEstado: EstadoPago | null) => {
+            onChange={(
+              _,
+              nuevoEstado:
+                | EstadoPago
+                | null
+            ) => {
               if (nuevoEstado) {
-                setEstadoPago(nuevoEstado);
+                setEstadoPago(
+                  nuevoEstado
+                );
               }
             }}
             sx={{
-              "& .MuiToggleButton-root": {
-                minHeight: 44,
-                borderColor: "#D5D5D5",
-                textTransform: "none",
-                fontWeight: 700,
-              },
+              "& .MuiToggleButton-root":
+                {
+                  minHeight: 44,
+                  borderColor:
+                    "#D5D5D5",
+                  textTransform:
+                    "none",
+                  fontWeight:
+                    700,
+                },
 
-              "& .MuiToggleButton-root.Mui-selected": {
-                backgroundColor: "#E8F5E9",
-                color: "#2E7D32",
-                borderColor: "#81C784",
-              },
+              "& .MuiToggleButton-root.Mui-selected":
+                {
+                  backgroundColor:
+                    "#E8F5E9",
+                  color:
+                    "#2E7D32",
+                  borderColor:
+                    "#81C784",
+                },
 
-              "& .MuiToggleButton-root.Mui-selected:hover": {
-                backgroundColor: "#E8F5E9",
-              },
+              "& .MuiToggleButton-root.Mui-selected:hover":
+                {
+                  backgroundColor:
+                    "#E8F5E9",
+                },
             }}
           >
             <ToggleButton value="Pagado">
@@ -563,7 +843,10 @@ function NuevaVentaPage() {
 
             <ToggleButton
               value="Pendiente"
-              disabled={clienteId === CONSUMIDOR_FINAL}
+              disabled={
+                clienteId ===
+                CONSUMIDOR_FINAL
+              }
             >
               Pendiente
             </ToggleButton>
@@ -574,16 +857,20 @@ function NuevaVentaPage() {
           <Box
             sx={{
               display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
+              alignItems:
+                "flex-end",
+              justifyContent:
+                "space-between",
               gap: 1,
             }}
           >
             <Box>
               <Typography
                 sx={{
-                  fontSize: "0.8rem",
-                  color: "text.secondary",
+                  fontSize:
+                    "0.8rem",
+                  color:
+                    "text.secondary",
                 }}
               >
                 Total de la venta
@@ -592,9 +879,11 @@ function NuevaVentaPage() {
               <Typography
                 sx={{
                   mt: 0.15,
-                  fontSize: "1.75rem",
+                  fontSize:
+                    "1.75rem",
                   fontWeight: 800,
-                  color: "#2E7D32",
+                  color:
+                    "#2E7D32",
                 }}
               >
                 {totalFormateado}
@@ -604,12 +893,17 @@ function NuevaVentaPage() {
             <Typography
               sx={{
                 pb: 0.35,
-                fontSize: "0.78rem",
-                color: "text.secondary",
+                fontSize:
+                  "0.78rem",
+                color:
+                  "text.secondary",
               }}
             >
-              {productosAgregados.length}{" "}
-              {productosAgregados.length === 1
+              {
+                productosAgregados.length
+              }{" "}
+              {productosAgregados.length ===
+              1
                 ? "producto"
                 : "productos"}
             </Typography>
@@ -617,28 +911,36 @@ function NuevaVentaPage() {
         </CardContent>
       </Card>
 
-      {/* Confirmar */}
+      {/* CONFIRMAR */}
+
       <Button
         fullWidth
         variant="contained"
-        startIcon={<CheckCircleOutlineRounded />}
-        onClick={handleConfirmarVenta}
+        startIcon={
+          <CheckCircleOutlineRounded />
+        }
+        onClick={
+          handleConfirmarVenta
+        }
         disabled={
           confirmandoVenta ||
-          productosAgregados.length === 0
+          productosAgregados.length ===
+            0
         }
         sx={{
           mt: 2,
           minHeight: 52,
           borderRadius: "14px",
-          backgroundColor: "#2E7D32",
+          backgroundColor:
+            "#2E7D32",
           fontWeight: 700,
           fontSize: "0.98rem",
           textTransform: "none",
           boxShadow: "none",
 
           "&:hover": {
-            backgroundColor: "#256628",
+            backgroundColor:
+              "#256628",
             boxShadow: "none",
           },
         }}
@@ -648,37 +950,58 @@ function NuevaVentaPage() {
           : "Confirmar venta"}
       </Button>
 
+      {/* DIALOG PRODUCTO */}
+
       <AgregarProductoVentaDialog
-        open={dialogoProductoAbierto}
-        productos={productosDisponibles}
+        open={
+          dialogoProductoAbierto
+        }
+        productos={productos}
         initialValues={
           productoEnEdicion
             ? {
                 productoId:
                   productoEnEdicion.productoId,
+
                 cantidadCajones:
                   productoEnEdicion.cantidadCajones,
+
                 precioUnitario:
                   productoEnEdicion.precioUnitario,
               }
             : undefined
         }
-        loading={guardandoProducto}
-        onClose={cerrarDialogoProducto}
-        onSubmit={handleGuardarProducto}
+        loading={
+          guardandoProducto
+        }
+        onClose={
+          cerrarDialogoProducto
+        }
+        onSubmit={
+          handleGuardarProducto
+        }
       />
-      {ventaRegistradaId !== null && (
+
+      {/* VENTA REGISTRADA */}
+
+      {ventaRegistradaId !==
+        null && (
         <VentaRegistradaDialog
-          open={dialogoVentaRegistrada}
-          numeroVenta={ventaRegistradaId}
+          open={
+            dialogoVentaRegistrada
+          }
+          numeroVenta={
+            ventaRegistradaId
+          }
           onImprimir={() => {
-            console.log(
-              "Imprimir ticket de la venta:",
-              ventaRegistradaId
+            navigate(
+              `/ventas/${ventaRegistradaId}`
             );
           }}
           onVerDetalle={() => {
-            navigate(`/ventas/${ventaRegistradaId}`);
+            navigate(
+              `/ventas/${ventaRegistradaId}`
+            );
           }}
           onVolverVentas={() => {
             navigate("/ventas", {
