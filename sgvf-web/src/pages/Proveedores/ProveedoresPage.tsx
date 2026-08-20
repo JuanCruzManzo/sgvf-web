@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   Box,
   Fab,
@@ -7,101 +8,102 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+
 import ProveedorCard from "./components/ProveedorCard";
 import ConfirmDialog from "../../components/ConfirmDialog";
 
-interface Proveedor {
-  id: number;
-  nombre: string;
-  telefono: string;
-  saldoPendiente: number;
-}
+import {
+  eliminarProveedor,
+  obtenerProveedores,
+  type Proveedor,
+} from "../../services/proveedorService";
 
-/**
- * Datos simulados para validar el diseño.
- *
- * TODO:
- * Reemplazar este arreglo por los proveedores
- * obtenidos desde la API.
- */
-const proveedoresSimulados: Proveedor[] = [
-  {
-    id: 1,
-    nombre: "Distribuidora El Sol",
-    telefono: "223 555-4182",
-    saldoPendiente: 120000,
-  },
-  {
-    id: 2,
-    nombre: "Frutas del Valle",
-    telefono: "223 444-9021",
-    saldoPendiente: 0,
-  },
-  {
-    id: 3,
-    nombre: "Mayorista San Martín",
-    telefono: "223 333-7654",
-    saldoPendiente: 78500,
-  },
-];
-
-/**
- * Pantalla principal del módulo Proveedores.
- *
- * Permite consultar y buscar proveedores.
- * En una etapa posterior incorporará el CRUD
- * y la conexión con la API.
- */
 function ProveedoresPage() {
   const navigate = useNavigate();
 
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
+
+  const [busqueda, setBusqueda] = useState("");
+
   const [proveedorAEliminar, setProveedorAEliminar] = useState<{
-  id: number;
-  nombre: string;
+    id: number;
+    nombre: string;
   } | null>(null);
 
   const [eliminando, setEliminando] = useState(false);
-  const handleEliminarProveedor = () => {
+
+  useEffect(() => {
+    const cargarProveedores = async () => {
+      try {
+        setCargando(true);
+        setErrorCarga(false);
+
+        const data = await obtenerProveedores();
+
+        setProveedores(data);
+      } catch (error) {
+        console.error("Error al cargar proveedores:", error);
+        setErrorCarga(true);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarProveedores();
+  }, []);
+
+  const proveedoresFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    return proveedores
+      .filter((proveedor) => proveedor.activo)
+      .filter((proveedor) => {
+        if (!texto) {
+          return true;
+        }
+
+        return (
+          proveedor.nombre.toLowerCase().includes(texto) ||
+          proveedor.telefono.toLowerCase().includes(texto)
+        );
+      });
+  }, [proveedores, busqueda]);
+
+  const handleEliminarProveedor = async () => {
     if (!proveedorAEliminar) {
       return;
     }
 
-    setEliminando(true);
+    try {
+      setEliminando(true);
 
-    // Más adelante esto se reemplaza por el DELETE a la API.
-    console.log("Proveedor eliminado:", proveedorAEliminar.id);
+      await eliminarProveedor(proveedorAEliminar.id);
 
-    setTimeout(() => {
-      setEliminando(false);
+      setProveedores((proveedoresActuales) =>
+        proveedoresActuales.filter(
+          (proveedor) =>
+            proveedor.id !== proveedorAEliminar.id
+        )
+      );
+
       setProveedorAEliminar(null);
-    }, 600);
-  };
+    } catch (error) {
+      console.error("Error al eliminar proveedor:", error);
 
-  const [busqueda, setBusqueda] = useState("");
-
-  /**
-   * Filtra los proveedores por nombre o teléfono
-   * mientras el usuario escribe en el buscador.
-   */
-  const proveedoresFiltrados = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
-
-    if (!texto) {
-      return proveedoresSimulados;
+      alert("No se pudo eliminar el proveedor.");
+    } finally {
+      setEliminando(false);
     }
-
-    return proveedoresSimulados.filter(
-      (proveedor) =>
-        proveedor.nombre.toLowerCase().includes(texto) ||
-        proveedor.telefono.toLowerCase().includes(texto)
-    );
-  }, [busqueda]);
+  };
 
   return (
     <Box>
-      {/* Encabezado de la página */}
+      {/* Encabezado */}
       <Box sx={{ mb: 2 }}>
         <Typography
           component="h1"
@@ -136,13 +138,18 @@ function ProveedoresPage() {
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRoundedIcon sx={{ color: "text.secondary" }} />
+                <SearchRoundedIcon
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                />
               </InputAdornment>
             ),
           },
         }}
         sx={{
           mb: 2,
+
           "& .MuiOutlinedInput-root": {
             borderRadius: "14px",
             backgroundColor: "#FFFFFF",
@@ -150,57 +157,40 @@ function ProveedoresPage() {
         }}
       />
 
-      {/* Cantidad de resultados */}
-      <Typography
-        sx={{
-          mb: 1.25,
-          fontSize: "0.78rem",
-          color: "text.secondary",
-        }}
-      >
-        {proveedoresFiltrados.length} proveedores encontrados
-      </Typography>
-
-      {/* Listado de proveedores */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.25,
-        }}
-      >
-        {proveedoresFiltrados.map((proveedor) => (
-          <ProveedorCard
-            key={proveedor.id}
-            nombre={proveedor.nombre}
-            telefono={proveedor.telefono}
-            saldoPendiente={proveedor.saldoPendiente}
-            onVerMovimientos={() => {
-              navigate(`/proveedores/${proveedor.id}`);
-            }}
-            onEditar={() => {
-              navigate(`/proveedores/${proveedor.id}/editar`);
-            }}
-            onEliminar={() => {
-              setProveedorAEliminar({
-                id: proveedor.id,
-                nombre: proveedor.nombre,
-              });
-            }}
-          />
-        ))}
-      </Box>
-
-      {/* Mensaje cuando la búsqueda no tiene resultados */}
-      {proveedoresFiltrados.length === 0 && (
+      {/* Cargando */}
+      {cargando && (
         <Box
           sx={{
-            py: 6,
+            py: 5,
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontWeight: 600 }}>
-            No encontramos proveedores
+          <Typography
+            sx={{
+              fontSize: "0.85rem",
+              color: "text.secondary",
+            }}
+          >
+            Cargando proveedores...
+          </Typography>
+        </Box>
+      )}
+
+      {/* Error */}
+      {!cargando && errorCarga && (
+        <Box
+          sx={{
+            py: 5,
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "#333333",
+            }}
+          >
+            No pudimos cargar los proveedores
           </Typography>
 
           <Typography
@@ -210,12 +200,92 @@ function ProveedoresPage() {
               color: "text.secondary",
             }}
           >
-            Probá buscando con otro nombre o teléfono.
+            Verificá que el servidor esté funcionando.
           </Typography>
         </Box>
       )}
 
-      {/* Acción para registrar un proveedor nuevo */}
+      {/* Contenido */}
+      {!cargando && !errorCarga && (
+        <>
+          {/* Cantidad */}
+          <Typography
+            sx={{
+              mb: 1.25,
+              fontSize: "0.78rem",
+              color: "text.secondary",
+            }}
+          >
+            {proveedoresFiltrados.length}{" "}
+            {proveedoresFiltrados.length === 1
+              ? "proveedor encontrado"
+              : "proveedores encontrados"}
+          </Typography>
+
+          {/* Listado */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.25,
+              pb: 11,
+            }}
+          >
+            {proveedoresFiltrados.map((proveedor) => (
+              <ProveedorCard
+                key={proveedor.id}
+                nombre={proveedor.nombre}
+                telefono={proveedor.telefono}
+                saldoPendiente={proveedor.saldoPendiente}
+                onVerMovimientos={() => {
+                  navigate(`/proveedores/${proveedor.id}`);
+                }}
+                onEditar={() => {
+                  navigate(
+                    `/proveedores/${proveedor.id}/editar`
+                  );
+                }}
+                onEliminar={() => {
+                  setProveedorAEliminar({
+                    id: proveedor.id,
+                    nombre: proveedor.nombre,
+                  });
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* Sin resultados */}
+          {proveedoresFiltrados.length === 0 && (
+            <Box
+              sx={{
+                py: 6,
+                textAlign: "center",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                }}
+              >
+                No encontramos proveedores
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.5,
+                  fontSize: "0.85rem",
+                  color: "text.secondary",
+                }}
+              >
+                Probá buscando con otro nombre o teléfono.
+              </Typography>
+            </Box>
+          )}
+        </>
+      )}
+
+      {/* Nuevo proveedor */}
       <Fab
         aria-label="Agregar proveedor"
         onClick={() => navigate("/proveedores/nuevo")}
@@ -225,7 +295,9 @@ function ProveedoresPage() {
           bottom: 88,
           backgroundColor: "#2E7D32",
           color: "#FFFFFF",
-          boxShadow: "0 8px 20px rgba(46, 125, 50, 0.25)",
+          boxShadow:
+            "0 8px 20px rgba(46, 125, 50, 0.25)",
+
           "&:hover": {
             backgroundColor: "#256628",
           },
@@ -233,6 +305,8 @@ function ProveedoresPage() {
       >
         <AddRoundedIcon />
       </Fab>
+
+      {/* Confirmación */}
       <ConfirmDialog
         open={Boolean(proveedorAEliminar)}
         title="Eliminar proveedor"

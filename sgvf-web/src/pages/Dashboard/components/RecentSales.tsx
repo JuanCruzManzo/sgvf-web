@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -9,39 +9,77 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import { useNavigate } from "react-router-dom";
 
-const ventasRecientes = [
-  {
-    id: 1,
-    cliente: "Mercado Central",
-    detalle: "5 cajones de tomate",
-    total: "$85.000",
-    hora: "10:35",
-  },
-  {
-    id: 2,
-    cliente: "Verdulería El Sol",
-    detalle: "3 cajones de papa",
-    total: "$48.000",
-    hora: "09:50",
-  },
-  {
-    id: 3,
-    cliente: "Cliente mostrador",
-    detalle: "2 cajones de choclo",
-    total: "$31.500",
-    hora: "08:40",
-  },
-];
+import {
+  obtenerVentas,
+  type Venta,
+} from "../../../services/ventaService";
 
-/**
- * Muestra las ventas más recientes dentro de una sección desplegable.
- *
- * Actualmente utiliza datos simulados.
- * Más adelante se reemplazarán por información proveniente de la API.
- */
 function RecentSales() {
+  const navigate = useNavigate();
+
   const [expandido, setExpandido] = useState(false);
+  const [ventas, setVentas] = useState<Venta[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
+
+  useEffect(() => {
+    const cargarVentas = async () => {
+      try {
+        setCargando(true);
+        setErrorCarga(false);
+
+        const data = await obtenerVentas();
+
+        setVentas(data);
+      } catch (error) {
+        console.error("Error al cargar ventas recientes:", error);
+        setErrorCarga(true);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarVentas();
+  }, []);
+
+  const ventasRecientes = useMemo(() => {
+    return [...ventas]
+      .sort(
+        (a, b) =>
+          new Date(b.fecha).getTime() -
+          new Date(a.fecha).getTime()
+      )
+      .slice(0, 3);
+  }, [ventas]);
+
+  const formatearMonto = (monto: number) =>
+    monto.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    });
+
+  const formatearHora = (fecha: string) =>
+    new Date(fecha).toLocaleTimeString("es-AR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const obtenerDetalle = (venta: Venta) => {
+    const cantidadCajones = venta.detalles.reduce(
+      (total, detalle) =>
+        total + detalle.cantidadCajones,
+      0
+    );
+
+    if (venta.detalles.length === 1) {
+      return `${cantidadCajones} cajones de ${venta.detalles[0].producto}`;
+    }
+
+    return `${cantidadCajones} cajones · ${venta.detalles.length} productos`;
+  };
 
   return (
     <Accordion
@@ -104,79 +142,136 @@ function RecentSales() {
       </AccordionSummary>
 
       <AccordionDetails sx={{ px: 2, pt: 0, pb: 1 }}>
-        {ventasRecientes.map((venta, index) => (
-          <Box key={venta.id}>
-            <Box
+        {cargando && (
+          <Typography
+            sx={{
+              py: 2,
+              textAlign: "center",
+              fontSize: "0.82rem",
+              color: "text.secondary",
+            }}
+          >
+            Cargando ventas...
+          </Typography>
+        )}
+
+        {!cargando && errorCarga && (
+          <Typography
+            sx={{
+              py: 2,
+              textAlign: "center",
+              fontSize: "0.82rem",
+              color: "text.secondary",
+            }}
+          >
+            No pudimos cargar las ventas.
+          </Typography>
+        )}
+
+        {!cargando &&
+          !errorCarga &&
+          ventasRecientes.length === 0 && (
+            <Typography
               sx={{
-                py: 1.5,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.25,
+                py: 2,
+                textAlign: "center",
+                fontSize: "0.82rem",
+                color: "text.secondary",
               }}
             >
-              <Avatar
+              Todavía no hay ventas registradas.
+            </Typography>
+          )}
+
+        {!cargando &&
+          !errorCarga &&
+          ventasRecientes.map((venta, index) => (
+            <Box key={venta.id}>
+              <Box
                 sx={{
-                  width: 38,
-                  height: 38,
-                  backgroundColor: "#E8F5E9",
-                  color: "#2E7D32",
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
+                  py: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.25,
                 }}
               >
-                {venta.cliente.charAt(0)}
-              </Avatar>
-
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  noWrap
+                <Avatar
                   sx={{
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    color: "#333333",
+                    width: 38,
+                    height: 38,
+                    backgroundColor: "#E8F5E9",
+                    color: "#2E7D32",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
                   }}
                 >
-                  {venta.cliente}
-                </Typography>
+                  {venta.cliente.charAt(0).toUpperCase()}
+                </Avatar>
+
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    noWrap
+                    sx={{
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#333333",
+                    }}
+                  >
+                    {venta.cliente}
+                  </Typography>
+
+                  <Typography
+                    noWrap
+                    sx={{
+                      mt: 0.15,
+                      fontSize: "0.76rem",
+                      color: "text.secondary",
+                    }}
+                  >
+                    {obtenerDetalle(venta)} ·{" "}
+                    {formatearHora(venta.fecha)}
+                  </Typography>
+                </Box>
 
                 <Typography
-                  noWrap
                   sx={{
-                    mt: 0.15,
-                    fontSize: "0.76rem",
-                    color: "text.secondary",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    color: "#2E7D32",
                   }}
                 >
-                  {venta.detalle} · {venta.hora}
+                  {formatearMonto(venta.total)}
                 </Typography>
               </Box>
 
-              <Typography
-                sx={{
-                  fontSize: "0.88rem",
-                  fontWeight: 700,
-                  color: "#2E7D32",
-                }}
-              >
-                {venta.total}
-              </Typography>
+              {index < ventasRecientes.length - 1 && (
+                <Divider />
+              )}
             </Box>
+          ))}
 
-            {index < ventasRecientes.length - 1 && <Divider />}
-          </Box>
-        ))}
-
-        <Typography
-          sx={{
-            py: 1.25,
-            textAlign: "center",
-            color: "#2E7D32",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-          }}
-        >
-          Ver todas las ventas
-        </Typography>
+        {!cargando &&
+          !errorCarga &&
+          ventasRecientes.length > 0 && (
+            <Typography
+              component="button"
+              onClick={() => navigate("/ventas")}
+              sx={{
+                width: "100%",
+                py: 1.25,
+                border: 0,
+                backgroundColor: "transparent",
+                cursor: "pointer",
+                textAlign: "center",
+                color: "#2E7D32",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                fontFamily: "inherit",
+              }}
+            >
+              Ver todas las ventas
+            </Typography>
+          )}
       </AccordionDetails>
     </Accordion>
   );

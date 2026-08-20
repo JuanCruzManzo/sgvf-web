@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProveedorForm from "./components/ProveedorForm";
+import { crearProveedor } from "../../services/proveedorService";
 
 interface ProveedorFormValues {
   nombre: string;
@@ -23,18 +24,26 @@ function NuevoProveedorPage() {
   const navigate = useNavigate();
   const [guardando, setGuardando] = useState(false);
 
-  const handleGuardar = (values: ProveedorFormValues) => {
-    setGuardando(true);
+  const handleGuardar = async (
+    values: ProveedorFormValues
+  ) => {
+    try {
+      setGuardando(true);
 
-    // Más adelante se reemplaza por el POST a la API.
-    console.log("Nuevo proveedor:", values);
+      await crearProveedor({
+        nombre: values.nombre,
+        telefono: values.telefono,
+      });
 
-    setTimeout(() => {
-      setGuardando(false);
       navigate("/proveedores");
-    }, 600);
-  };
+    } catch (error) {
+      console.error("Error al crear proveedor:", error);
 
+      alert("No se pudo crear el proveedor.");
+    } finally {
+      setGuardando(false);
+    }
+  };
   return (
     <Box sx={{ pb: 10 }}>
       {/* Encabezado */}

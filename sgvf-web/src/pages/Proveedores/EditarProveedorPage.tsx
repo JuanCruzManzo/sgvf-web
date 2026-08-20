@@ -2,80 +2,155 @@ import {
   ArrowBackRounded,
   EditOutlined,
 } from "@mui/icons-material";
+
 import {
   Avatar,
   Box,
   Card,
   CardContent,
+  CircularProgress,
   IconButton,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import ProveedorForm from "./components/ProveedorForm";
+
+import {
+  actualizarProveedor,
+  obtenerProveedorPorId,
+  type Proveedor,
+} from "../../services/proveedorService";
 
 interface ProveedorFormValues {
   nombre: string;
   telefono: string;
 }
 
-const proveedoresSimulados = [
-  {
-    id: 1,
-    nombre: "Distribuidora Norte",
-    telefono: "223 555-1234",
-  },
-  {
-    id: 2,
-    nombre: "Mercado Central",
-    telefono: "223 444-5678",
-  },
-  {
-    id: 3,
-    nombre: "Frutas del Sur",
-    telefono: "223 333-9012",
-  },
-];
-
 function EditarProveedorPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [proveedor, setProveedor] = useState<Proveedor | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  const proveedor = proveedoresSimulados.find(
-    (item) => item.id === Number(id)
-  );
+  useEffect(() => {
+    const cargarProveedor = async () => {
+      const proveedorId = Number(id);
 
-  if (!proveedor) {
+      if (!proveedorId) {
+        setErrorCarga(true);
+        setCargando(false);
+        return;
+      }
+
+      try {
+        setCargando(true);
+        setErrorCarga(false);
+
+        const data = await obtenerProveedorPorId(proveedorId);
+
+        setProveedor(data);
+      } catch (error) {
+        console.error("Error al cargar proveedor:", error);
+        setErrorCarga(true);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarProveedor();
+  }, [id]);
+
+  const handleGuardarCambios = async (
+    values: ProveedorFormValues
+  ) => {
+    if (!proveedor) {
+      return;
+    }
+
+    try {
+      setGuardando(true);
+
+      await actualizarProveedor(proveedor.id, {
+        nombre: values.nombre,
+        telefono: values.telefono,
+      });
+
+      navigate(`/proveedores/${proveedor.id}`, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error al actualizar proveedor:", error);
+
+      alert("No se pudo actualizar el proveedor.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  if (cargando) {
     return (
-      <Box sx={{ py: 6, textAlign: "center" }}>
-        <Typography sx={{ fontWeight: 700 }}>
-          Proveedor no encontrado
+      <Box
+        sx={{
+          py: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 1.5,
+        }}
+      >
+        <CircularProgress
+          size={30}
+          sx={{
+            color: "#2E7D32",
+          }}
+        />
+
+        <Typography
+          sx={{
+            fontSize: "0.85rem",
+            color: "text.secondary",
+          }}
+        >
+          Cargando proveedor...
         </Typography>
       </Box>
     );
   }
 
-  const handleGuardarCambios = (
-    values: ProveedorFormValues
-  ) => {
-    setGuardando(true);
+  if (errorCarga || !proveedor) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          textAlign: "center",
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 700,
+          }}
+        >
+          No pudimos cargar el proveedor
+        </Typography>
 
-    // Más adelante se reemplaza por el PUT o PATCH a la API.
-    console.log("Proveedor editado:", {
-      id: proveedor.id,
-      ...values,
-    });
-
-    setTimeout(() => {
-    setGuardando(false);
-
-    navigate(`/proveedores/${proveedor.id}`, {
-        replace: true,
-    });
-    }, 600);
-  };
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontSize: "0.85rem",
+            color: "text.secondary",
+          }}
+        >
+          Verificá que el proveedor exista e intentá nuevamente.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 10 }}>
@@ -99,6 +174,7 @@ function EditarProveedorPage() {
             backgroundColor: "#FFFFFF",
             color: "#333333",
             flexShrink: 0,
+
             "&:hover": {
               backgroundColor: "#F5F5F5",
             },
