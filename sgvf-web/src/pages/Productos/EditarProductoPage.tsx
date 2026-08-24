@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ProductoForm from "./components/ProductoForm";
+import AppSnackbar from "../../components/AppSnackbar";
 
 import {
   actualizarProducto,
@@ -40,6 +41,9 @@ function EditarProductoPage() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  const [mensajeSnackbar, setMensajeSnackbar] = useState("");
+  const [snackbarAbierto, setSnackbarAbierto] = useState(false);
 
   useEffect(() => {
     const cargarProducto = async () => {
@@ -93,7 +97,10 @@ function EditarProductoPage() {
     } catch (error) {
       console.error("Error al actualizar producto:", error);
 
-      alert("No se pudo actualizar el producto.");
+      setMensajeSnackbar(
+        "No se pudo actualizar el producto."
+      );
+      setSnackbarAbierto(true);
     } finally {
       setGuardando(false);
     }
@@ -285,6 +292,13 @@ function EditarProductoPage() {
           />
         </CardContent>
       </Card>
+
+      <AppSnackbar
+        open={snackbarAbierto}
+        mensaje={mensajeSnackbar}
+        tipo="error"
+        onClose={() => setSnackbarAbierto(false)}
+      />
     </Box>
   );
 }

@@ -11,7 +11,6 @@ import ClientesPage from "../pages/Clientes/ClientesPage";
 import ProveedoresPage from "../pages/Proveedores/ProveedoresPage";
 import VentasPage from "../pages/Ventas/VentasPage";
 import VentaDetallePage from "../pages/Ventas/VentaDetallePage";
-import EstadisticasPage from "../pages/Estadisticas/EstadisticasPage";
 import ProveedorDetallePage from "../pages/Proveedores/ProveedorDetallePage";
 import ClienteDetallePage from "../pages/Clientes/ClienteDetallePage";
 import NuevoProveedorPage from "../pages/Proveedores/NuevoProveedorPage";
@@ -45,7 +44,6 @@ function AppRoutes() {
           <Route path="/ventas/:id" element={<VentaDetallePage />}/>
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="proveedores" element={<ProveedoresPage />} />
-          <Route path="estadisticas" element={<EstadisticasPage />} />
           <Route path="/proveedores" element={<ProveedoresPage />} />
           <Route path="/proveedores/:id" element={<ProveedorDetallePage />} />
           <Route path="/clientes/:id" element={<ClienteDetallePage />} />

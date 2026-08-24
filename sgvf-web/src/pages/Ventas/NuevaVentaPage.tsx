@@ -47,6 +47,7 @@ import {
 
 import {
   crearVenta,
+  descargarTicketVenta,
   type EstadoPago,
 } from "../../services/ventaService";
 
@@ -128,6 +129,18 @@ function NuevaVentaPage() {
     setVentaRegistradaId,
   ] = useState<number | null>(null);
 
+  const handleImprimirTicket = async () => {
+    if (ventaRegistradaId === null) {
+      return;
+    }
+
+    try {
+      await descargarTicketVenta(ventaRegistradaId);
+    } catch (error) {
+      console.error("Error descargando ticket:", error);
+      alert("No se pudo generar el ticket.");
+    }
+  };
   // =========================
   // Cargar clientes y productos
   // =========================
@@ -982,26 +995,15 @@ function NuevaVentaPage() {
         }
       />
 
-      {/* VENTA REGISTRADA */}
+     {/* VENTA REGISTRADA */}
 
-      {ventaRegistradaId !==
-        null && (
+      {ventaRegistradaId !== null && (
         <VentaRegistradaDialog
-          open={
-            dialogoVentaRegistrada
-          }
-          numeroVenta={
-            ventaRegistradaId
-          }
-          onImprimir={() => {
-            navigate(
-              `/ventas/${ventaRegistradaId}`
-            );
-          }}
+          open={dialogoVentaRegistrada}
+          numeroVenta={ventaRegistradaId}
+          onImprimir={handleImprimirTicket}
           onVerDetalle={() => {
-            navigate(
-              `/ventas/${ventaRegistradaId}`
-            );
+            navigate(`/ventas/${ventaRegistradaId}`);
           }}
           onVolverVentas={() => {
             navigate("/ventas", {

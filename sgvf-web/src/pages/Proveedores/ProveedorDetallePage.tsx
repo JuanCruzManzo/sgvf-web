@@ -157,7 +157,6 @@ function ProveedorDetallePage() {
 
   const handleGuardarMovimiento = async (data: {
     monto: number;
-    fecha: string;
     observaciones: string;
   }) => {
     if (!dialogoMovimiento || !proveedor) {
@@ -489,7 +488,7 @@ function ProveedorDetallePage() {
         </Button>
       </Box>
 
-      {/* Historial todavía simulado */}
+      {/* Historial de movimientos */}
       <Box sx={{ mt: 2.25 }}>
         <Typography
           sx={{

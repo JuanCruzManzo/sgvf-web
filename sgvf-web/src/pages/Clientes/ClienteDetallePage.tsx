@@ -85,7 +85,6 @@ function ClienteDetallePage() {
 
   const handleGuardarMovimiento = async (data: {
     monto: number;
-    fecha: string;
     observaciones: string;
   }) => {
     if (!cliente || !dialogoMovimiento) {
@@ -436,12 +435,18 @@ function ClienteDetallePage() {
             {movimientos.map((movimiento) => (
               <MovimientoClienteCard
                 key={movimiento.id}
-                tipo="cobro"
-                fecha={movimiento.fecha}
+                tipo={
+                  movimiento.tipo === "Deuda"
+                    ? "deuda"
+                    : "cobro"
+                }
+                fecha={new Date(movimiento.fecha).toLocaleDateString("es-AR")}
                 monto={movimiento.monto}
                 descripcion={
                   movimiento.observaciones ||
-                  "Movimiento de cuenta"
+                  (movimiento.tipo === "Deuda"
+                    ? "Deuda registrada"
+                    : "Cobro registrado")
                 }
               />
             ))}

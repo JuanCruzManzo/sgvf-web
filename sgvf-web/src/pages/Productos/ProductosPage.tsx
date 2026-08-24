@@ -308,7 +308,7 @@ function ProductosPage() {
               color: "text.secondary",
             }}
           >
-            Verificá que el servidor esté funcionando.
+            No pudimos cargar los productos. Intentá nuevamente.
           </Typography>
         </Box>
       )}

@@ -6,7 +6,9 @@ export interface PagoCliente {
   cliente: string;
   fecha: string;
   monto: number;
-  observaciones?: string;
+  observaciones: string | null;
+  tipo: "Pago" | "Deuda";
+  ventaId: number | null;
 }
 
 export interface PagoClienteCreateDto {

@@ -2,6 +2,15 @@ import { AppBar, Box, Toolbar, Typography } from "@mui/material";
 import UserMenu from "./UserMenu";
 
 function TopBar() {
+  const nombre = localStorage.getItem("nombre") || "";
+  const apellido = localStorage.getItem("apellido") || "";
+
+  const nombreCompleto =
+    `${nombre} ${apellido}`.trim() || "Usuario";
+
+  const iniciales = `${nombre.charAt(0)}${apellido.charAt(0)}`
+    .toUpperCase();
+
   return (
     <AppBar
       position="static"
@@ -12,11 +21,24 @@ function TopBar() {
         borderBottom: "1px solid #eeeeee",
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between", minHeight: 72 }}>
+      <Toolbar
+        sx={{
+          justifyContent: "space-between",
+          minHeight: 72,
+          px: {
+            xs: 2,
+            sm: 3,
+          },
+        }}
+      >
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: 700, color: "#2E7D32", lineHeight: 1.2 }}
+            sx={{
+              fontWeight: 700,
+              color: "#2E7D32",
+              lineHeight: 1.2,
+            }}
           >
             El Pariente
           </Typography>
@@ -27,9 +49,9 @@ function TopBar() {
         </Box>
 
         <UserMenu
-          nombre="Juan Rodríguez"
+          nombre={nombreCompleto}
           rol="Administrador"
-          iniciales="JR"
+          iniciales={iniciales}
         />
       </Toolbar>
     </AppBar>

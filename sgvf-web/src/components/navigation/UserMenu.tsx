@@ -47,6 +47,9 @@ function UserMenu({
     cerrarMenu();
 
     localStorage.removeItem("token");
+    localStorage.removeItem("nombre");
+    localStorage.removeItem("apellido");
+    localStorage.removeItem("nombreUsuario");
 
     navigate("/login", {
       replace: true,
@@ -108,7 +111,11 @@ function UserMenu({
         slotProps={{
           paper: {
             sx: {
-              width: 260,
+              width: {
+                xs: "calc(100vw - 32px)",
+                sm: 260,
+              },
+              maxWidth: 260,
               mt: 1,
               borderRadius: "16px",
               border: "1px solid #E0E0E0",

@@ -7,7 +7,7 @@ function MainLayout() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         backgroundColor: "#F8F9FA",
       }}
     >
@@ -19,6 +19,11 @@ function MainLayout() {
         sx={{
           py: 2,
           pb: 11,
+
+          px: {
+            xs: 2,
+            sm: 3,
+          },
         }}
       >
         <Outlet />

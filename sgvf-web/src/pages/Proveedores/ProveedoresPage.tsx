@@ -200,7 +200,7 @@ function ProveedoresPage() {
               color: "text.secondary",
             }}
           >
-            Verificá que el servidor esté funcionando.
+            No pudimos cargar los proveedores. Intentá nuevamente.
           </Typography>
         </Box>
       )}

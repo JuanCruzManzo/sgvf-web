@@ -6,7 +6,6 @@ import {
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import { useLocation, useNavigate } from "react-router-dom";
 
 function BottomNav() {
@@ -14,9 +13,11 @@ function BottomNav() {
   const location = useLocation();
 
   const getCurrentValue = () => {
+    if (location.pathname === "/") return "/";
     if (location.pathname.startsWith("/ventas")) return "/ventas/nueva";
     if (location.pathname.startsWith("/productos")) return "/productos";
-    return "/";
+
+    return false;
   };
 
   return (
@@ -28,6 +29,8 @@ function BottomNav() {
         left: 0,
         right: 0,
         zIndex: 10,
+        pb: "env(safe-area-inset-bottom)",
+        backgroundColor: "#FFFFFF",
       }}
     >
       <BottomNavigation
@@ -56,12 +59,6 @@ function BottomNav() {
           label="Stock"
           value="/productos"
           icon={<Inventory2RoundedIcon />}
-        />
-
-        <BottomNavigationAction
-          label="Estadísticas"
-          value="/estadisticas"
-          icon={<BarChartIcon/>}
         />
       </BottomNavigation>
     </Paper>

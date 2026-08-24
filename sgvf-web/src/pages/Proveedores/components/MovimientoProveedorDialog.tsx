@@ -17,7 +17,6 @@ import { useEffect, useState } from "react";
 
 interface MovimientoProveedorData {
   monto: number;
-  fecha: string;
   observaciones: string;
 }
 
@@ -37,14 +36,10 @@ function MovimientoProveedorDialog({
   onSubmit,
 }: MovimientoProveedorDialogProps) {
   const [monto, setMonto] = useState("");
-  const [fecha, setFecha] = useState(
-    new Date().toISOString().split("T")[0]
-  );
   const [observaciones, setObservaciones] = useState("");
 
   const [errores, setErrores] = useState({
     monto: "",
-    fecha: "",
   });
 
   const esDeuda = tipo === "deuda";
@@ -52,11 +47,9 @@ function MovimientoProveedorDialog({
   useEffect(() => {
     if (open) {
       setMonto("");
-      setFecha(new Date().toISOString().split("T")[0]);
       setObservaciones("");
       setErrores({
         monto: "",
-        fecha: "",
       });
     }
   }, [open]);
@@ -69,18 +62,16 @@ function MovimientoProveedorDialog({
         !monto || montoNumerico <= 0
           ? "Ingresá un monto mayor que cero."
           : "",
-      fecha: fecha ? "" : "Seleccioná una fecha.",
     };
 
     setErrores(nuevosErrores);
 
-    if (nuevosErrores.monto || nuevosErrores.fecha) {
+    if (nuevosErrores.monto) {
       return;
     }
 
     onSubmit({
       monto: montoNumerico,
-      fecha,
       observaciones: observaciones.trim(),
     });
   };
@@ -177,36 +168,6 @@ function MovimientoProveedorDialog({
                 min: 0,
                 inputMode: "decimal",
               },
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-                backgroundColor: "#FFFFFF",
-              },
-            }}
-          />
-
-          <TextField
-            label="Fecha"
-            type="date"
-            value={fecha}
-            onChange={(event) => {
-              setFecha(event.target.value);
-
-              if (errores.fecha) {
-                setErrores((estadoAnterior) => ({
-                  ...estadoAnterior,
-                  fecha: "",
-                }));
-              }
-            }}
-            error={Boolean(errores.fecha)}
-            helperText={errores.fecha}
-            fullWidth
-            slotProps={{
               inputLabel: {
                 shrink: true,
               },

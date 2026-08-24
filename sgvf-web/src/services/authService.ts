@@ -1,18 +1,27 @@
 import api from "./api";
 
+interface LoginResponse {
+  token: string;
+  nombre: string;
+  apellido: string;
+  nombreUsuario: string;
+}
+
 export async function login(
   nombreUsuario: string,
   password: string
-): Promise<string> {
-
-  const response = await api.post("/Auth/login", {
+): Promise<LoginResponse> {
+  const response = await api.post<LoginResponse>("/Auth/login", {
     nombreUsuario,
     password,
   });
 
-  const token = response.data.token;
+  const data = response.data;
 
-  localStorage.setItem("token", token);
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("nombre", data.nombre);
+  localStorage.setItem("apellido", data.apellido);
+  localStorage.setItem("nombreUsuario", data.nombreUsuario);
 
-  return token;
+  return data;
 }
